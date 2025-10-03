@@ -1,0 +1,330 @@
+/* Glassmorphism Styles for CodeFlow AI Assistant */
+
+/* Reset and prevent conflicts with host page */
+#codeflow-assistant,
+#codeflow-assistant * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Main container */
+.codeflow-overlay {
+    position: fixed;
+    z-index: 999999;
+    pointer-events: auto;
+}
+
+/* Glassmorphism effect */
+.codeflow-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    padding: 1px;
+    background: linear-gradient(145deg,
+            rgba(255, 255, 255, 0.3),
+            rgba(255, 255, 255, 0.05));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* Header styles */
+.codeflow-header {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.codeflow-header button {
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.codeflow-header button:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.1);
+}
+
+.codeflow-header button:active {
+    transform: scale(0.95);
+}
+
+/* Task section */
+.codeflow-task {
+    position: relative;
+    overflow: hidden;
+}
+
+.codeflow-task::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.15),
+            rgba(147, 51, 234, 0.15));
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+#codeflow-edit-task {
+    font-weight: 500;
+}
+
+#codeflow-edit-task:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Content scrollbar customization */
+.codeflow-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.codeflow-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.codeflow-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin: 8px 0;
+}
+
+.codeflow-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+
+.codeflow-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Suggestion cards */
+.suggestion-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.suggestion-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent);
+    transition: left 0.5s;
+}
+
+.suggestion-card:hover::before {
+    left: 100%;
+}
+
+/* Code blocks in suggestions */
+.suggestion-card pre {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(74, 222, 128, 0.3) transparent;
+}
+
+.suggestion-card pre::-webkit-scrollbar {
+    height: 4px;
+}
+
+.suggestion-card pre::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.suggestion-card pre::-webkit-scrollbar-thumb {
+    background: rgba(74, 222, 128, 0.3);
+    border-radius: 4px;
+}
+
+/* Copy button in suggestions */
+.suggestion-card button {
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.suggestion-card button:hover {
+    background: rgba(74, 222, 128, 0.3) !important;
+    border-color: rgba(74, 222, 128, 0.6) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 222, 128, 0.2);
+}
+
+.suggestion-card button:active {
+    transform: translateY(0);
+}
+
+/* Warning cards pulse effect */
+.warning-card {
+    animation: slideIn 0.3s ease-out, subtlePulse 2s infinite;
+}
+
+@keyframes subtlePulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+    }
+}
+
+/* Step cards with gradient border */
+.step-card {
+    position: relative;
+    border: none;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.step-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(135deg,
+            rgba(59, 130, 246, 0.5),
+            rgba(147, 51, 234, 0.5));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+/* Footer status indicators */
+.codeflow-footer {
+    position: relative;
+}
+
+#codeflow-status {
+    position: relative;
+    padding-left: 12px;
+}
+
+#codeflow-status::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+    }
+
+    50% {
+        opacity: 0.7;
+        box-shadow: 0 0 0 4px rgba(74, 222, 128, 0);
+    }
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .codeflow-overlay {
+        width: calc(100vw - 40px) !important;
+        max-width: 380px;
+    }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+    .codeflow-overlay {
+        background: rgba(20, 20, 20, 0.85);
+    }
+
+    .codeflow-header {
+        background: rgba(30, 30, 30, 0.5);
+    }
+
+    .suggestion-card {
+        background: rgba(40, 40, 40, 0.5);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Accessibility - Focus states */
+button:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.8);
+    outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+/* Loading state */
+.loading-shimmer {
+    background: linear-gradient(90deg,
+            rgba(255, 255, 255, 0.05) 0%,
+            rgba(255, 255, 255, 0.15) 50%,
+            rgba(255, 255, 255, 0.05) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}

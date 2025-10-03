@@ -1,0 +1,62 @@
+{
+    "manifest_version": 3,
+    "name": "CodeFlow AI Assistant",
+    "version": "1.0.0",
+    "description": "Live AI assistant that monitors your coding workflow and provides real-time guidance",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage",
+        "tabs"
+    ],
+    "host_permissions": [
+        "https://replit.com/*",
+        "https://leetcode.com/*",
+        "https://colab.research.google.com/*",
+        "https://github.com/*",
+        "https://codepen.io/*",
+        "https://stackblitz.com/*",
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "background/service-worker.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://replit.com/*",
+                "https://leetcode.com/*",
+                "https://colab.research.google.com/*"
+            ],
+            "js": [
+                "content/content-script.js",
+                "content/context-monitor.js",
+                "content/overlay-ui.js"
+            ],
+            "css": [
+                "assets/styles/glassmorphism.css"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "action": {
+        "default_popup": "popup/popup.html"
+    },
+    "commands": {
+        "toggle-assistant": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+A",
+                "mac": "Command+Shift+A"
+            },
+            "description": "Toggle CodeFlow AI Assistant"
+        },
+        "quick-help": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+H",
+                "mac": "Command+Shift+H"
+            },
+            "description": "Get quick help for current code"
+        }
+    }
+}
