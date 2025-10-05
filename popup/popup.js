@@ -1,10 +1,12 @@
-// Popup.js - Extension popup controller
+// Popup.js - Extension popup controller with sidebar support
 
 class PopupController {
     constructor() {
         this.taskInput = document.getElementById('taskInput');
         this.startBtn = document.getElementById('startBtn');
         this.stopBtn = document.getElementById('stopBtn');
+        this.openSidebarBtn = document.getElementById('openSidebarBtn');
+        this.openOverlayBtn = document.getElementById('openOverlayBtn');
         this.monitorToggle = document.getElementById('monitorToggle');
         this.errorToggle = document.getElementById('errorToggle');
         this.suggestToggle = document.getElementById('suggestToggle');
@@ -69,6 +71,86 @@ class PopupController {
         // Stop button
         this.stopBtn.addEventListener('click', () => {
             this.stopMonitoring();
+        });
+
+        // Open Sidebar button
+        this.openSidebarBtn.addEventListener('click', async () => {
+            console.log('Open Sidebar button clicked');
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab) {
+                this.showNotification('⚠️ No active tab found', 'warning');
+                return;
+            }
+
+            // Check if on supported platform
+            const supportedPlatforms = [
+                'replit.com',
+                'leetcode.com',
+                'colab.research.google.com',
+                'github.com',
+                'codepen.io',
+                'stackblitz.com'
+            ];
+
+            const isSupported = supportedPlatforms.some(platform =>
+                tab.url?.includes(platform)
+            );
+
+            if (!isSupported) {
+                this.showNotification('⚠️ Please navigate to a supported coding platform (Replit, LeetCode, GitHub, etc.)', 'warning');
+                return;
+            }
+
+            try {
+                // Send message to show sidebar
+                const response = await chrome.tabs.sendMessage(tab.id, {
+                    action: 'showSidebar'
+                });
+                
+                console.log('Sidebar response:', response);
+                this.showNotification('✅ Sidebar opened! Press Ctrl+Shift+L to toggle.', 'success');
+                
+                // Close popup after a short delay
+                setTimeout(() => {
+                    window.close();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error opening sidebar:', error);
+                this.showNotification('❌ Error: ' + error.message, 'error');
+            }
+        });
+
+        // Open Overlay button
+        this.openOverlayBtn.addEventListener('click', async () => {
+            console.log('Open Overlay button clicked');
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab) {
+                this.showNotification('⚠️ No active tab found', 'warning');
+                return;
+            }
+
+            try {
+                // Send message to show overlay
+                const response = await chrome.tabs.sendMessage(tab.id, {
+                    action: 'toggleAssistant',
+                    isActive: true
+                });
+                
+                console.log('Overlay response:', response);
+                this.showNotification('✅ Overlay opened! Press Ctrl+Shift+A to toggle.', 'success');
+                
+                // Close popup after a short delay
+                setTimeout(() => {
+                    window.close();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error opening overlay:', error);
+                this.showNotification('❌ Error: ' + error.message, 'error');
+            }
         });
 
         // Save task on input (debounced)
@@ -155,7 +237,7 @@ class PopupController {
                 isActive: true
             });
 
-            this.showNotification('✅ Monitoring started! Press Ctrl+Shift+A to toggle overlay.', 'success');
+            this.showNotification('✅ Monitoring started! Press Ctrl+Shift+A for overlay or Ctrl+Shift+L for sidebar.', 'success');
 
             // Update stats
             this.incrementStat('sessionsCount');
@@ -282,5 +364,6 @@ class PopupController {
 
 // Initialize popup controller
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('CodeFlow Popup loaded');
     new PopupController();
 });

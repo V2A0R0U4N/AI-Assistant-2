@@ -14,7 +14,7 @@
 
         body {
             width: 380px;
-            min-height: 500px;
+            min-height: 550px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: white;
@@ -152,6 +152,46 @@
             box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
         }
 
+        /* Quick Access Section */
+        .quick-access {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .quick-access-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .quick-btn {
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .quick-btn span:first-child {
+            font-size: 24px;
+        }
+
         /* Settings section */
         .settings-grid {
             display: grid;
@@ -211,7 +251,7 @@
             left: 22px;
         }
 
-        /* Shortcuts section */
+        /* Keyboard Shortcuts */
         .shortcuts {
             background: rgba(0, 0, 0, 0.2);
             padding: 16px;
@@ -244,7 +284,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        /* Stats section */
+        /* Stats */
         .stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -291,13 +331,10 @@
 
         /* Animations */
         @keyframes pulse {
-
-            0%,
-            100% {
+            0%, 100% {
                 opacity: 1;
                 box-shadow: 0 0 10px #4ade80;
             }
-
             50% {
                 opacity: 0.7;
                 box-shadow: 0 0 20px #4ade80;
@@ -309,7 +346,6 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -341,7 +377,6 @@
                 transform: translateX(100px);
                 opacity: 0;
             }
-
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -381,6 +416,21 @@
             </button>
         </div>
 
+        <!-- Quick Access -->
+        <div class="quick-access">
+            <div class="section-title" style="margin-bottom: 12px;">🚀 Quick Access</div>
+            <div class="quick-access-grid">
+                <button id="openSidebarBtn" class="quick-btn">
+                    <span>💬</span>
+                    <span>Open Sidebar</span>
+                </button>
+                <button id="openOverlayBtn" class="quick-btn">
+                    <span>📌</span>
+                    <span>Open Overlay</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Settings -->
         <div class="section">
             <div class="section-title">⚙️ Settings</div>
@@ -416,7 +466,11 @@
             <div class="section-title">⌨️ Keyboard Shortcuts</div>
             <div class="shortcuts">
                 <div class="shortcut-item">
-                    <span class="shortcut-label">Toggle Assistant</span>
+                    <span class="shortcut-label">Toggle Sidebar</span>
+                    <span class="shortcut-key">Ctrl+Shift+L</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="shortcut-label">Toggle Overlay</span>
                     <span class="shortcut-key">Ctrl+Shift+A</span>
                 </div>
                 <div class="shortcut-item">

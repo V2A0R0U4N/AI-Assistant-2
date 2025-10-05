@@ -19,19 +19,22 @@
         "<all_urls>"
     ],
     "background": {
-        "service_worker": "background/service-worker.js",
-        "type": "module"
+        "service_worker": "background/service-worker.js"
     },
     "content_scripts": [
         {
             "matches": [
                 "https://replit.com/*",
                 "https://leetcode.com/*",
-                "https://colab.research.google.com/*"
+                "https://colab.research.google.com/*",
+                "https://github.com/*",
+                "https://codepen.io/*",
+                "https://stackblitz.com/*"
             ],
             "js": [
+                "content/sidebar-ui.js",
+                "content/sidebar-integration.js",
                 "content/content-script.js",
-                "content/context-monitor.js",
                 "content/overlay-ui.js"
             ],
             "css": [
@@ -49,7 +52,14 @@
                 "default": "Ctrl+Shift+A",
                 "mac": "Command+Shift+A"
             },
-            "description": "Toggle CodeFlow AI Assistant"
+            "description": "Toggle CodeFlow AI Assistant Overlay"
+        },
+        "toggle-sidebar": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+L",
+                "mac": "Command+Shift+L"
+            },
+            "description": "Toggle CodeFlow AI Sidebar"
         },
         "quick-help": {
             "suggested_key": {

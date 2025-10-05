@@ -1,125 +1,64 @@
-/* Glassmorphism Styles for CodeFlow AI Assistant */
+/* Sidebar-specific Glassmorphism Styles */
 
-/* Reset and prevent conflicts with host page */
-#codeflow-assistant,
-#codeflow-assistant * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-}
-
-/* Main container */
-.codeflow-overlay {
+/* Main sidebar container */
+#codeflow-sidebar {
     position: fixed;
-    z-index: 999999;
-    pointer-events: auto;
-}
-
-/* Glassmorphism effect */
-.codeflow-overlay::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    padding: 1px;
-    background: linear-gradient(145deg,
-            rgba(255, 255, 255, 0.3),
-            rgba(255, 255, 255, 0.05));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-}
-
-/* Header styles */
-.codeflow-header {
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.codeflow-header button {
-    transition: all 0.2s ease;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-}
-
-.codeflow-header button:hover {
-    background: rgba(255, 255, 255, 0.2) !important;
-    transform: scale(1.1);
-}
-
-.codeflow-header button:active {
-    transform: scale(0.95);
-}
-
-/* Task section */
-.codeflow-task {
-    position: relative;
-    overflow: hidden;
-}
-
-.codeflow-task::before {
-    content: '';
-    position: absolute;
     top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: rgba(20, 20, 30, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+#codeflow-sidebar * {
+    box-sizing: border-box;
+}
+
+/* Sidebar visible state */
+#codeflow-sidebar.visible {
+    right: 0;
+}
+
+/* Header gradient border effect */
+.sidebar-header {
+    position: relative;
+}
+
+.sidebar-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg,
-            rgba(59, 130, 246, 0.15),
-            rgba(147, 51, 234, 0.15));
-    opacity: 0.5;
-    pointer-events: none;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(102, 126, 234, 0.5),
+        rgba(118, 75, 162, 0.5),
+        transparent
+    );
 }
 
-#codeflow-edit-task {
-    font-weight: 500;
+/* Tab navigation glow effect */
+.sidebar-tabs {
+    position: relative;
 }
 
-#codeflow-edit-task:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-/* Content scrollbar customization */
-.codeflow-content {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-}
-
-.codeflow-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.codeflow-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    margin: 8px 0;
-}
-
-.codeflow-content::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
-    transition: background 0.2s;
-}
-
-.codeflow-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-}
-
-/* Suggestion cards */
-.suggestion-card {
+.tab-btn {
     position: relative;
     overflow: hidden;
 }
 
-.suggestion-card::before {
+.tab-btn::before {
     content: '';
     position: absolute;
     top: 0;
@@ -127,204 +66,352 @@
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg,
-            transparent,
-            rgba(255, 255, 255, 0.1),
-            transparent);
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
     transition: left 0.5s;
 }
 
-.suggestion-card:hover::before {
+.tab-btn:hover::before {
     left: 100%;
 }
 
-/* Code blocks in suggestions */
-.suggestion-card pre {
+.tab-btn.active {
+    background: linear-gradient(135deg,
+        rgba(102, 126, 234, 0.2),
+        rgba(118, 75, 162, 0.2)
+    ) !important;
+    border-color: rgba(102, 126, 234, 0.4) !important;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+}
+
+/* Content area scrollbar */
+.sidebar-content {
     scrollbar-width: thin;
-    scrollbar-color: rgba(74, 222, 128, 0.3) transparent;
+    scrollbar-color: rgba(102, 126, 234, 0.5) transparent;
 }
 
-.suggestion-card pre::-webkit-scrollbar {
-    height: 4px;
+.sidebar-content::-webkit-scrollbar {
+    width: 6px;
 }
 
-.suggestion-card pre::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+.sidebar-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
 }
 
-.suggestion-card pre::-webkit-scrollbar-thumb {
-    background: rgba(74, 222, 128, 0.3);
-    border-radius: 4px;
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg,
+        rgba(102, 126, 234, 0.5),
+        rgba(118, 75, 162, 0.5)
+    );
+    border-radius: 10px;
+    transition: background 0.2s;
 }
 
-/* Copy button in suggestions */
-.suggestion-card button {
-    transition: all 0.2s;
-    font-weight: 500;
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg,
+        rgba(102, 126, 234, 0.8),
+        rgba(118, 75, 162, 0.8)
+    );
 }
 
-.suggestion-card button:hover {
-    background: rgba(74, 222, 128, 0.3) !important;
-    border-color: rgba(74, 222, 128, 0.6) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(74, 222, 128, 0.2);
-}
-
-.suggestion-card button:active {
-    transform: translateY(0);
-}
-
-/* Warning cards pulse effect */
-.warning-card {
-    animation: slideIn 0.3s ease-out, subtlePulse 2s infinite;
-}
-
-@keyframes subtlePulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 0 rgba(239, 68, 68, 0);
-    }
-
-    50% {
-        box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
-    }
-}
-
-/* Step cards with gradient border */
-.step-card {
+/* Message bubbles with enhanced glassmorphism */
+.message-bubble {
     position: relative;
-    border: none;
-    background: rgba(59, 130, 246, 0.1);
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 85%;
+    word-wrap: break-word;
+    animation: slideInMessage 0.3s ease-out;
 }
 
-.step-card::before {
+.message-user {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+.message-assistant {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom-left-radius: 4px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.message-assistant::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: 12px;
     padding: 1px;
     background: linear-gradient(135deg,
-            rgba(59, 130, 246, 0.5),
-            rgba(147, 51, 234, 0.5));
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.05)
+    );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
+    pointer-events: none;
 }
 
-/* Footer status indicators */
-.codeflow-footer {
+/* Quick action buttons with glass effect */
+.quick-action-btn {
     position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
-#codeflow-status {
-    position: relative;
-    padding-left: 12px;
-}
-
-#codeflow-status::before {
+.quick-action-btn::before {
     content: '';
     position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    background: #4ade80;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(102, 126, 234, 0.2),
+        transparent
+    );
+    transition: left 0.5s;
 }
 
-@keyframes pulse {
+.quick-action-btn:hover::before {
+    left: 100%;
+}
 
-    0%,
-    100% {
-        opacity: 1;
-        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
-    }
+.quick-action-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+}
 
-    50% {
-        opacity: 0.7;
-        box-shadow: 0 0 0 4px rgba(74, 222, 128, 0);
-    }
+/* Input area with glow effect */
+.sidebar-input {
+    position: relative;
+}
+
+.sidebar-input::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(102, 126, 234, 0.5),
+        rgba(118, 75, 162, 0.5),
+        transparent
+    );
+}
+
+#chat-input {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+}
+
+#chat-input::-webkit-scrollbar {
+    width: 4px;
+}
+
+#chat-input::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#chat-input::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 10px;
+}
+
+#chat-input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+}
+
+/* Send button with gradient and glow */
+#send-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+#send-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+#send-btn:active::before {
+    width: 200px;
+    height: 200px;
+}
+
+#send-btn:hover {
+    box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+}
+
+/* Typing indicator animation */
+.typing-indicator {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+/* Suggestion cards in sidebar */
+.sidebar-suggestion-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-suggestion-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(102, 126, 234, 0.1),
+        transparent
+    );
+    transition: left 0.5s;
+}
+
+.sidebar-suggestion-card:hover::before {
+    left: 100%;
+}
+
+.sidebar-suggestion-card:hover {
+    border-color: rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+}
+
+/* Close button hover effect */
+#sidebar-close {
+    transition: all 0.2s;
+}
+
+#sidebar-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
+}
+
+#sidebar-close:active {
+    transform: rotate(90deg) scale(0.9);
 }
 
 /* Animations */
-@keyframes slideIn {
+@keyframes slideInMessage {
     from {
         opacity: 0;
-        transform: translateX(100px);
+        transform: translateY(10px);
     }
-
     to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
     }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
+@keyframes typing {
+    0%, 60%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
     }
-
-    to {
+    30% {
         opacity: 1;
+        transform: scale(1);
     }
 }
 
-/* Responsive adjustments */
+/* Welcome message floating animation */
+#welcome-message {
+    animation: floatWelcome 3s ease-in-out infinite;
+}
+
+@keyframes floatWelcome {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1200px) {
+    #codeflow-sidebar {
+        width: 360px;
+        right: -360px;
+    }
+}
+
 @media (max-width: 768px) {
-    .codeflow-overlay {
-        width: calc(100vw - 40px) !important;
-        max-width: 380px;
+    #codeflow-sidebar {
+        width: 100%;
+        right: -100%;
     }
 }
 
 /* Dark mode enhancements */
 @media (prefers-color-scheme: dark) {
-    .codeflow-overlay {
-        background: rgba(20, 20, 20, 0.85);
+    #codeflow-sidebar {
+        background: rgba(10, 10, 15, 0.98);
     }
-
-    .codeflow-header {
-        background: rgba(30, 30, 30, 0.5);
-    }
-
-    .suggestion-card {
-        background: rgba(40, 40, 40, 0.5);
-        border-color: rgba(255, 255, 255, 0.1);
+    
+    .message-assistant {
+        background: rgba(30, 30, 40, 0.8);
     }
 }
 
-/* Accessibility - Focus states */
-button:focus-visible {
-    outline: 2px solid rgba(59, 130, 246, 0.8);
+/* Focus states for accessibility */
+#chat-input:focus-visible {
+    outline: 2px solid rgba(102, 126, 234, 0.8);
+    outline-offset: 2px;
+}
+
+.tab-btn:focus-visible,
+.quick-action-btn:focus-visible,
+#send-btn:focus-visible,
+#sidebar-close:focus-visible {
+    outline: 2px solid rgba(102, 126, 234, 0.8);
     outline-offset: 2px;
 }
 
 /* Selection color */
-::selection {
-    background: rgba(59, 130, 246, 0.3);
+#codeflow-sidebar ::selection {
+    background: rgba(102, 126, 234, 0.3);
     color: white;
-}
-
-/* Loading state */
-.loading-shimmer {
-    background: linear-gradient(90deg,
-            rgba(255, 255, 255, 0.05) 0%,
-            rgba(255, 255, 255, 0.15) 50%,
-            rgba(255, 255, 255, 0.05) 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: -200% 0;
-    }
-
-    100% {
-        background-position: 200% 0;
-    }
 }
