@@ -32,10 +32,9 @@
                 "https://stackblitz.com/*"
             ],
             "js": [
+                "content/overlay-ui.js",
                 "content/sidebar-ui.js",
-                "content/sidebar-integration.js",
-                "content/content-script.js",
-                "content/overlay-ui.js"
+                "content/content-script.js"
             ],
             "css": [
                 "assets/styles/glassmorphism.css"

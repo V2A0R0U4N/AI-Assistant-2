@@ -1,11 +1,11 @@
 /* Sidebar-specific Glassmorphism Styles */
 
-/* Main sidebar container */
+/* Main sidebar container - Width and position are now controlled by sidebar-ui.js */
 #codeflow-sidebar {
     position: fixed;
     top: 0;
-    right: -400px;
-    width: 400px;
+    /* right: -400px; /* REMOVED to prevent conflict */
+    /* width: 400px;   /* REMOVED to prevent conflict */
     height: 100vh;
     background: rgba(20, 20, 30, 0.95);
     backdrop-filter: blur(20px);
@@ -372,17 +372,19 @@
 
 /* Responsive design for smaller screens */
 @media (max-width: 1200px) {
-    #codeflow-sidebar {
+    /* Let JS handle this now */
+    /* #codeflow-sidebar {
         width: 360px;
         right: -360px;
-    }
+    } */
 }
 
 @media (max-width: 768px) {
-    #codeflow-sidebar {
+    /* Let JS handle this now */
+    /* #codeflow-sidebar {
         width: 100%;
         right: -100%;
-    }
+    } */
 }
 
 /* Dark mode enhancements */
