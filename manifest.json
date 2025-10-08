@@ -16,7 +16,7 @@
         "https://github.com/*",
         "https://codepen.io/*",
         "https://stackblitz.com/*",
-        "<all_urls>"
+        "https://generativelanguage.googleapis.com/*"
     ],
     "background": {
         "service_worker": "background/service-worker.js"
