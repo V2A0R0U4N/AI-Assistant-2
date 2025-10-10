@@ -1,218 +1,603 @@
-/* CodeFlow AI Pro - Content Script with Gemini AI integration */
+/* CodeFlow AI Pro - Fixed with Quick Actions & Reopen Functionality */
 (function () {
   "use strict";
-
-  function el(tag, attrs, html) {
-    var d = document.createElement(tag);
-    if (attrs) {
-      Object.keys(attrs).forEach(function (k) {
-        if (k === "style") d.style.cssText = attrs[k];
-        else if (k.startsWith("on") && typeof attrs[k] === "function")
-          d.addEventListener(k.slice(2), attrs[k]);
-        else d.setAttribute(k, attrs[k]);
-      });
-    }
-    if (html !== undefined) d.innerHTML = html;
-    return d;
-  }
 
   var AssistantSidebar = function () {
     this.container = null;
     this.isVisible = false;
     this.isAwaitingResponse = false;
+    this.selectedFiles = [];
     this.conversationHistory = [];
     this.init();
   };
 
   AssistantSidebar.prototype.init = function () {
-    this.createSidebar();
+    this.createDashboard();
     this.setupEvents();
     this.setupGlobalShortcut();
   };
 
-  AssistantSidebar.prototype.createSidebar = function () {
-    if (document.getElementById("codeflow-sidebar")) {
-      this.container = document.getElementById("codeflow-sidebar");
+  AssistantSidebar.prototype.createDashboard = function () {
+    if (document.getElementById("codeflow-dashboard")) {
+      this.container = document.getElementById("codeflow-dashboard");
       return;
     }
 
-    this.container = el("div", { id: "codeflow-sidebar" });
-    this.container.style.cssText = "position:fixed;top:0;right:-480px;width:480px;height:100vh;background:rgba(15,15,25,0.98);backdrop-filter:blur(30px);border-left:1px solid rgba(255,255,255,0.08);box-shadow:-8px 0 40px rgba(0,0,0,0.5);z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;transition:right 0.34s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;";
+    // 🔷 MAIN WRAPPER
+    this.container = document.createElement("div");
+    this.container.id = "codeflow-dashboard";
+    this.container.style.cssText = `
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 2147483647;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: none;
+      flex-direction: column;
+      background: transparent;
+      pointer-events: none;
+    `;
 
-    var headerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="display:flex;align-items:center;gap:12px;"><div style="width:44px;height:44px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 6px 16px rgba(102,126,234,0.28);">🤖</div><div><div style="color:white;font-weight:700;font-size:17px;">CodeFlow AI Pro</div><div style="color:rgba(255,255,255,0.55);font-size:11px;margin-top:2px;">All-in-one coding assistant</div></div></div><button id="sidebar-close" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.75);font-size:20px;cursor:pointer;width:36px;height:36px;border-radius:10px;transition:all 0.2s;">×</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div style="padding:10px;background:rgba(74,222,128,0.1);border-radius:10px;display:flex;align-items:center;gap:8px;border:1px solid rgba(74,222,128,0.18);"><div id="status-dot" style="width:8px;height:8px;background:#4ade80;border-radius:50%;box-shadow:0 0 10px #4ade80;animation:pulse 2s infinite;"></div><span style="color:#4ade80;font-size:11px;font-weight:700;">LIVE CONNECTION</span></div><div style="padding:10px;background:rgba(72,133,237,0.1);border-radius:10px;display:flex;align-items:center;gap:8px;border:1px solid rgba(72,133,237,0.2);"><span style="color:#89b4f8;font-size:11px;font-weight:700;">🔷 POWERED BY GEMINI</span></div></div>`;
-    var header = el("div", { style: "padding:18px;background:linear-gradient(135deg,rgba(102,126,234,0.08),rgba(118,75,162,0.08));border-bottom:1px solid rgba(255,255,255,0.06);" }, headerHTML);
-    
-    var tabsHTML = ['<button class="tab-btn active" data-tab="chat">💬 Chat</button>', '<button class="tab-btn" data-tab="image" disabled>🎨 Image</button>', '<button class="tab-btn" data-tab="research" disabled>🔍 Web</button>', '<button class="tab-btn" data-tab="docs" disabled>📄 Docs</button>', '<button class="tab-btn" data-tab="monitor" disabled>📊 Live</button>'].join("");
-    var tabs = el("div", { style: "display:grid;grid-template-columns:repeat(5,1fr);padding:10px;gap:6px;background:rgba(0,0,0,0.28);border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto;" }, tabsHTML);
+    // 🔷 HEADER BAR
+    const topBar = document.createElement("div");
+    topBar.style.cssText = `
+      height: 70px; display: flex; justify-content: space-between; align-items: center;
+      padding: 0 32px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      pointer-events: auto;
+    `;
+    topBar.innerHTML = `
+      <div>
+        <div style="font-size: 12px; font-weight: 600; color: #a5b4fc; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Currently Working On</div>
+        <div id="projectName" style="font-size: 16px; font-weight: 600; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.4);">FiberHearts Dashboard Backend</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); border-radius: 20px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 4px 12px rgba(102,126,234,0.3);">
+          <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; box-shadow: 0 0 8px #4ade80;"></div>
+          <span id="topicMonitor">Chef Payment API Integration</span>
+        </div>
+        <button id="closeDashboard" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; font-size: 20px; cursor: pointer; width: 36px; height: 36px; border-radius: 10px; transition: all 0.2s; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">×</button>
+      </div>
+    `;
+    this.container.appendChild(topBar);
 
-    var content = el("div", { id: "sidebar-content", style: "flex:1;overflow-y:auto;padding:16px;box-sizing:border-box;" });
-    var chatTab = el("div", { id: "chat-tab", class: "tab-content" });
-    chatTab.innerHTML = `<div id="chat-messages" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;"></div><div id="welcome" style="text-align:center;padding:30px 18px;"><div style="font-size:60px;margin-bottom:12px;">🚀</div><h3 style="color:white;margin:0 0 8px 0;font-size:18px;">Welcome to CodeFlow AI Pro</h3><p style="color:rgba(255,255,255,0.66);margin:0 0 16px 0;font-size:13px;line-height:1.6;">Connected to Google Gemini. Ask me anything about your code!</p><div style="display:grid;gap:10px;"><button class="quick-action" data-action="Explain the selected code">📖 Explain selected code</button><button class="quick-action" data-action="Find bugs in the current file">🐛 Find bugs in this file</button><button class="quick-action" data-action="Suggest improvements for this code">⚡ Suggest improvements</button></div></div>`;
+    // 🔷 CHAT BOX
+    const chatContainer = document.createElement("div");
+    chatContainer.id = "chatContainer";
+    chatContainer.style.cssText = `
+      position: fixed;
+      top: 90px; right: 32px;
+      width: 420px;
+      height: calc(100vh - 120px);
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      pointer-events: auto;
+    `;
 
-    var inputAreaHTML = `<div style="display:flex;gap:8px;align-items:flex-end;"><textarea id="chat-input" placeholder="Ask Gemini anything..." style="flex:1;min-height:48px;max-height:120px;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.06);color:white;resize:none;"></textarea><button id="send-btn" style="width:48px;height:48px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:10px;color:white;font-size:20px;cursor:pointer;transition: background 0.2s;">↑</button></div><div style="font-size:11px;color:rgba(255,255,255,0.44);text-align:center;margin-top:10px;">Ctrl+Shift+L to toggle sidebar</div>`;
-    var inputArea = el("div", { style: "padding:14px;border-top:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.34);" }, inputAreaHTML);
-    
-    content.appendChild(chatTab);
-    this.container.appendChild(header);
-    this.container.appendChild(tabs);
-    this.container.appendChild(content);
-    this.container.appendChild(inputArea);
+    chatContainer.innerHTML = `
+      <!-- Header -->
+      <div style="padding: 20px 24px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.2);">
+        <div style="font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span>🤖</span><span>AI Assistant</span>
+        </div>
+      </div>
 
+      <!-- Messages -->
+      <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(0,0,0,0.02);">
+        <div id="welcomeScreen" style="text-align:center; padding:40px;">
+          <div style="font-size: 64px;">🚀</div>
+          <h3 style="font-size: 20px; font-weight: 600; margin: 8px 0; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Welcome to CodeFlow AI</h3>
+          <p style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 24px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">I'm here to help you with your development tasks</p>
+          
+          <!-- Quick Action Buttons -->
+          <div style="display: flex; flex-direction: column; gap: 12px; max-width: 320px; margin: 0 auto;">
+            <button class="quick-action-btn" data-action="Explain this payment integration code in detail. What does each part do?">
+              <span style="font-size: 20px;">📖</span>
+              <span>Explain this payment integration</span>
+            </button>
+            <button class="quick-action-btn" data-action="Review this code for security issues, especially payment handling vulnerabilities and data validation problems.">
+              <span style="font-size: 20px;">🔒</span>
+              <span>Review for security issues</span>
+            </button>
+            <button class="quick-action-btn" data-action="Suggest improvements for this payment integration code - performance, error handling, and best practices.">
+              <span style="font-size: 20px;">⚡</span>
+              <span>Suggest improvements</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div style="padding: 20px 24px; background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.1);">
+        <!-- File Preview Area -->
+        <div id="filePreview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; min-height: 0; transition: all 0.3s;"></div>
+        
+        <div id="inputWrapper" style="display: flex; gap: 12px; align-items: flex-end;">
+          <div style="flex: 1;">
+            <textarea id="chatInput" placeholder="Ask anything..." 
+              style="width: 100%; background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 12px 16px; 
+              font-size: 14px; font-family: inherit; color: #ffffff; resize: none; max-height: 120px; transition: all 0.2s;"></textarea>
+          </div>
+          <label for="fileInput" style="cursor: pointer; width: 44px; height: 44px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.2s;">📎</label>
+          <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.pdf,.doc,.docx,.txt,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.html,.css,.json">
+          <button id="sendBtn" style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); border: none; border-radius: 12px; color: white; font-size: 20px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(102,126,234,0.3);">↑</button>
+        </div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; margin-top: 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">Press Enter to send • Shift+Enter for new line</div>
+      </div>
+    `;
+    this.container.appendChild(chatContainer);
     document.body.appendChild(this.container);
+
+    // Add CSS animations
     this.addStyles();
   };
 
+  // 🔷 ADD STYLES
   AssistantSidebar.prototype.addStyles = function () {
     if (document.getElementById("codeflow-styles")) return;
-    var styles = `
-      @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-      @keyframes typing{0%,60%,100%{opacity:0.35;transform:scale(0.9)}30%{opacity:1;transform:scale(1)}}
-      #codeflow-sidebar .message.user{align-self:flex-end}
-      #codeflow-sidebar .message.ai{align-self:flex-start}
-      #codeflow-sidebar ::-webkit-scrollbar{width:8px}
-      #codeflow-sidebar ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#667eea,#764ba2);border-radius:10px}
-      #codeflow-sidebar .tab-btn{padding:10px 8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:rgba(255,255,255,0.75);font-size:12px;cursor:pointer;}
-      #codeflow-sidebar .tab-btn:disabled{opacity:0.4;cursor:not-allowed;}
-      #codeflow-sidebar .tab-btn.active{background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);color:white;}
-      #codeflow-sidebar .quick-action{padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid rgba(255,255,255,0.1);color:white;cursor:pointer;text-align:left;font-size:13px;}
-      #codeflow-sidebar .quick-action:hover{background:rgba(255,255,255,0.1);}
-      #codeflow-sidebar pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin: 8px 0; overflow-x: auto; font-size: 13px; color: #a5b4f8; }
-      #codeflow-sidebar code { font-family: 'Courier New', Courier, monospace; }
-      #send-btn:disabled { background: #555; cursor: not-allowed; }
+    
+    const style = document.createElement("style");
+    style.id = "codeflow-styles";
+    style.textContent = `
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 2px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+      }
+      
+      .quick-action-btn:hover {
+        background: rgba(255,255,255,0.18);
+        border-color: rgba(102,126,234,0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+      }
+      
+      .quick-action-btn:active {
+        transform: translateY(0);
+      }
+      
+      #chatMessages::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      #chatMessages::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+      }
+      
+      #chatMessages::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+      }
+      
+      #chatMessages::-webkit-scrollbar-thumb:hover {
+        background: rgba(255,255,255,0.3);
+      }
+      
+      #closeDashboard:hover {
+        background: rgba(255,255,255,0.2) !important;
+        transform: rotate(90deg);
+      }
+      
+      label[for="fileInput"]:hover,
+      #sendBtn:hover {
+        transform: scale(1.05);
+      }
+      
+      label[for="fileInput"]:hover {
+        background: rgba(255,255,255,0.15) !important;
+      }
+      
+      #chatInput::placeholder {
+        color: rgba(255,255,255,0.5);
+      }
+      
+      #chatInput:focus {
+        border-color: rgba(102,126,234,0.6);
+        background: rgba(255,255,255,0.15);
+        outline: none;
+      }
+      
+      #sendBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     `;
-    var styleEl = el("style", { id: "codeflow-styles" }, styles);
-    document.head.appendChild(styleEl);
+    document.head.appendChild(style);
   };
 
+  // 🔷 EVENTS
   AssistantSidebar.prototype.setupEvents = function () {
-    var self = this;
-    this.container.querySelector("#sidebar-close").addEventListener("click", () => self.hide());
-    this.container.querySelector("#send-btn").addEventListener("click", () => self.sendMessage());
-    const chatInput = this.container.querySelector("#chat-input");
-    chatInput.addEventListener("keydown", (e) => {
+    const self = this;
+    const fileInput = this.container.querySelector("#fileInput");
+
+    // File upload handling
+    fileInput.addEventListener("change", (e) => {
+      const files = Array.from(e.target.files);
+      self.selectedFiles = [...self.selectedFiles, ...files];
+      self.renderFilePreview();
+      fileInput.value = "";
+    });
+
+    // Input events
+    const input = this.container.querySelector("#chatInput");
+    input.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         self.sendMessage();
       }
     });
-    chatInput.addEventListener('input', () => {
-        chatInput.style.height = 'auto';
-        chatInput.style.height = (chatInput.scrollHeight) + 'px';
+    
+    input.addEventListener("input", function () {
+      this.style.height = "auto";
+      this.style.height = Math.min(this.scrollHeight, 120) + "px";
     });
-    this.container.querySelectorAll(".quick-action").forEach(qa => {
-      qa.addEventListener("click", function() {
-        document.getElementById("chat-input").value = this.getAttribute("data-action");
+
+    // Send button
+    this.container.querySelector("#sendBtn").addEventListener("click", () => self.sendMessage());
+    
+    // Close button
+    this.container.querySelector("#closeDashboard").addEventListener("click", () => {
+      self.hide();
+    });
+
+    // Quick action buttons
+    const quickBtns = this.container.querySelectorAll(".quick-action-btn");
+    quickBtns.forEach(btn => {
+      btn.addEventListener("click", function() {
+        const action = this.getAttribute("data-action");
+        self.container.querySelector("#chatInput").value = action;
         self.sendMessage();
       });
     });
   };
-  
+
+  // 🔷 KEYBOARD SHORTCUT
   AssistantSidebar.prototype.setupGlobalShortcut = function () {
+    const self = this;
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey && e.shiftKey && (e.key === "L" || e.code === "KeyL")) {
         e.preventDefault();
-        this.toggle();
+        self.toggle();
       }
     });
   };
-  
-  AssistantSidebar.prototype.show = function () {
-    if (!this.container) return;
-    this.container.style.right = "0px";
-    this.isVisible = true;
-    setTimeout(() => this.container.querySelector("#chat-input")?.focus(), 340);
-  };
-  AssistantSidebar.prototype.hide = function () {
-    if (!this.container) return;
-    this.container.style.right = "-480px";
-    this.isVisible = false;
-  };
-  AssistantSidebar.prototype.toggle = function () {
-    if (this.isVisible) this.hide(); else this.show();
-  };
 
-  AssistantSidebar.prototype.sendMessage = function () {
-    const input = this.container.querySelector("#chat-input");
-    const sendBtn = this.container.querySelector("#send-btn");
-    const message = input.value.trim();
+  // 🔷 RENDER FILE PREVIEW
+  AssistantSidebar.prototype.renderFilePreview = function() {
+    const previewContainer = this.container.querySelector("#filePreview");
+    previewContainer.innerHTML = "";
 
-    if (!message || this.isAwaitingResponse) {
-        return;
+    if (this.selectedFiles.length === 0) {
+      previewContainer.style.minHeight = "0";
+      return;
     }
 
-    this.isAwaitingResponse = true;
-    sendBtn.disabled = true;
-    this.container.querySelector("#welcome")?.remove();
-    this.addMessage(message, "user");
-    this.conversationHistory.push({ role: "user", content: message });
-    input.value = "";
-    input.style.height = '48px';
+    previewContainer.style.minHeight = "70px";
 
-    this.addTypingIndicator();
     const self = this;
+    this.selectedFiles.forEach((file, index) => {
+      const preview = document.createElement("div");
+      preview.style.cssText = `
+        position: relative; border: 2px solid rgba(255,255,255,0.2); border-radius: 12px;
+        background: rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        display: flex; align-items: center; justify-content: center; 
+        overflow: hidden; width: 70px; height: 70px; 
+        transition: all 0.2s;
+        animation: fadeIn 0.3s ease-out;
+      `;
 
-    chrome.runtime.sendMessage({
-        action: "chatMessage",
-        message: message
-    }, function(response) {
-        self.removeTypingIndicator();
-        self.isAwaitingResponse = false;
-        sendBtn.disabled = false;
+      preview.addEventListener("mouseenter", () => {
+        preview.style.transform = "scale(1.05)";
+      });
 
-        if (chrome.runtime.lastError) {
-            console.error("sendMessage Error:", chrome.runtime.lastError.message);
-            self.addMessage("Error: Could not connect to the assistant. Reload the page and extension.", "assistant");
-            return;
-        }
+      preview.addEventListener("mouseleave", () => {
+        preview.style.transform = "scale(1)";
+      });
 
-        if (response && response.success) {
-            self.addMessage(response.response, "assistant");
-            self.conversationHistory.push({ role: "assistant", content: response.response });
-        } else {
-            const errorMessage = response ? response.response : "An unknown error occurred.";
-            self.addMessage(errorMessage, "assistant");
-        }
+      if (file.type.startsWith("image/")) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.style.cssText = `
+          width: 100%; height: 100%; 
+          object-fit: cover; 
+          border-radius: 10px;
+        `;
+        preview.appendChild(img);
+      } else {
+        const ext = file.name.split('.').pop().toUpperCase();
+        preview.innerHTML = `
+          <div style="text-align: center;">
+            <div style="font-size: 28px;">📄</div>
+            <div style="font-size: 9px; color: #ffffff; font-weight: 600; margin-top: 2px;">${ext}</div>
+          </div>
+        `;
+      }
+
+      // Remove button
+      const remove = document.createElement("div");
+      remove.textContent = "×";
+      remove.style.cssText = `
+        position: absolute; top: -8px; right: -8px;
+        background: #ef4444; color: white; 
+        width: 22px; height: 22px;
+        border-radius: 50%; 
+        font-size: 16px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center; 
+        cursor: pointer; 
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+        transition: all 0.2s;
+      `;
+      
+      remove.addEventListener("mouseenter", () => {
+        remove.style.background = "#dc2626";
+        remove.style.transform = "scale(1.1)";
+      });
+      
+      remove.addEventListener("mouseleave", () => {
+        remove.style.background = "#ef4444";
+        remove.style.transform = "scale(1)";
+      });
+
+      remove.onclick = () => {
+        self.selectedFiles.splice(index, 1);
+        self.renderFilePreview();
+      };
+
+      preview.appendChild(remove);
+
+      // File name tooltip
+      const fileName = document.createElement("div");
+      fileName.textContent = file.name;
+      fileName.style.cssText = `
+        position: absolute; bottom: -28px; left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 10;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      `;
+
+      preview.addEventListener("mouseenter", () => {
+        fileName.style.opacity = "1";
+      });
+
+      preview.addEventListener("mouseleave", () => {
+        fileName.style.opacity = "0";
+      });
+
+      preview.appendChild(fileName);
+      previewContainer.appendChild(preview);
     });
   };
 
-  AssistantSidebar.prototype.addMessage = function (text, sender) {
-    const messagesDiv = this.container.querySelector("#chat-messages");
-    if (!messagesDiv) return;
+  // 🔷 SHOW/HIDE/TOGGLE
+  AssistantSidebar.prototype.show = function () {
+    if (this.container) {
+      this.container.style.display = "flex";
+      this.isVisible = true;
+      setTimeout(() => {
+        const input = this.container.querySelector("#chatInput");
+        if (input) input.focus();
+      }, 100);
+    }
+  };
 
-    let sanitizedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    sanitizedText = sanitizedText.replace(/^#+\s/gm, '');
+  AssistantSidebar.prototype.hide = function () {
+    if (this.container) {
+      this.container.style.display = "none";
+      this.isVisible = false;
+    }
+  };
 
-    const formattedHTML = sanitizedText
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-        .replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-            return `<pre><code class="language-${lang}">${code}</code></pre>`;
-        })
-        .replace(/`(.*?)`/g, '<code>$1</code>') // Inline code
-        .replace(/\n/g, '<br>');
-
-    const msg = el("div", { class: `message ${sender}` });
-    if (sender === "user") {
-        msg.style.cssText = "padding:12px 16px;border-radius:12px;max-width:84%;font-size:14px;line-height:1.6;background:linear-gradient(135deg,#667eea,#764ba2);color:white;margin-left:auto;border-bottom-right-radius:4px;box-shadow:0 4px 16px rgba(102,126,234,0.18);word-wrap:break-word;";
+  AssistantSidebar.prototype.toggle = function () {
+    if (this.isVisible) {
+      this.hide();
     } else {
-        msg.style.cssText = "padding:12px 16px;border-radius:12px;max-width:84%;font-size:14px;line-height:1.6;background:rgba(255,255,255,0.06);color:white;border:1px solid rgba(255,255,255,0.08);border-bottom-left-radius:4px;word-wrap:break-word;";
+      this.show();
+    }
+  };
+
+  // 🔷 SEND MESSAGE
+  AssistantSidebar.prototype.sendMessage = function () {
+    const input = this.container.querySelector("#chatInput");
+    const sendBtn = this.container.querySelector("#sendBtn");
+    const text = input.value.trim();
+    const hasFiles = this.selectedFiles.length > 0;
+
+    if (!text && !hasFiles) return;
+    if (this.isAwaitingResponse) return;
+
+    // Remove welcome screen
+    const welcomeScreen = this.container.querySelector("#welcomeScreen");
+    if (welcomeScreen) welcomeScreen.remove();
+
+    // Add user message
+    if (text) {
+      this.addMessage("user", text);
+      this.conversationHistory.push({ role: "user", content: text });
     }
 
-    msg.innerHTML = formattedHTML;
-    messagesDiv.appendChild(msg);
-    messagesDiv.parentElement.scrollTop = messagesDiv.parentElement.scrollHeight;
+    // Add file messages
+    this.selectedFiles.forEach((f) => this.addFileMessage(f));
+
+    // Clear input and files
+    this.selectedFiles = [];
+    this.renderFilePreview();
+    input.value = "";
+    input.style.height = "auto";
+
+    // Show typing indicator
+    this.isAwaitingResponse = true;
+    sendBtn.disabled = true;
+    this.addTypingIndicator();
+
+    // Send to background script
+    const self = this;
+    chrome.runtime.sendMessage({
+      action: "chatMessage",
+      message: text
+    }, function(response) {
+      self.removeTypingIndicator();
+      self.isAwaitingResponse = false;
+      sendBtn.disabled = false;
+
+      if (chrome.runtime.lastError) {
+        console.error("Message error:", chrome.runtime.lastError.message);
+        self.addMessage("assistant", "⚠️ Connection error. Please reload the page and try again.");
+        return;
+      }
+
+      if (response && response.success) {
+        self.addMessage("assistant", response.response);
+        self.conversationHistory.push({ role: "assistant", content: response.response });
+      } else {
+        const errorMsg = response ? response.response : "An unknown error occurred.";
+        self.addMessage("assistant", errorMsg);
+      }
+    });
+  };
+
+  // 🔷 MESSAGE HANDLERS
+  AssistantSidebar.prototype.addMessage = function (sender, msg) {
+    const chat = this.container.querySelector("#chatMessages");
+    const el = document.createElement("div");
+    
+    // Format markdown-style code blocks and bold text
+    let formattedMsg = msg
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<pre style="background: rgba(0,0,0,0.4); color: #e5e7eb; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin: 8px 0; border: 1px solid rgba(255,255,255,0.1);"><code>${this.escapeHtml(code)}</code></pre>`;
+      })
+      .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">$1</code>')
+      .replace(/\n/g, '<br>');
+    
+    el.innerHTML = formattedMsg;
+    el.style.cssText = `
+      padding: 14px 16px; border-radius: 12px; max-width: 85%;
+      background: ${sender === "user" ? "rgba(102,126,234,0.3)" : "rgba(255,255,255,0.12)"};
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid ${sender === "user" ? "rgba(102,126,234,0.4)" : "rgba(255,255,255,0.2)"};
+      color: #ffffff;
+      align-self: ${sender === "user" ? "flex-end" : "flex-start"};
+      font-size: 14px; line-height: 1.5;
+      animation: fadeIn 0.3s ease-out;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    `;
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+  };
+
+  AssistantSidebar.prototype.addFileMessage = function (file) {
+    const chat = this.container.querySelector("#chatMessages");
+    const el = document.createElement("div");
+    el.style.cssText = `
+      padding: 12px; border-radius: 12px; max-width: 85%;
+      background: rgba(102,126,234,0.3); 
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(102,126,234,0.4);
+      align-self: flex-end;
+      display: flex; flex-direction: column; gap: 8px;
+      animation: fadeIn 0.3s ease-out;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    `;
+    
+    const name = document.createElement("div");
+    name.textContent = `${file.type.startsWith("image/") ? "🖼️" : "📄"} ${file.name}`;
+    name.style.cssText = "font-size: 13px; color: #ffffff; font-weight: 500;";
+    el.appendChild(name);
+
+    if (file.type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(file);
+      img.style.cssText = `max-width: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2);`;
+      el.appendChild(img);
+    }
+
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
   };
 
   AssistantSidebar.prototype.addTypingIndicator = function () {
-    if (document.getElementById("typing-indicator")) return;
-    const messagesDiv = this.container.querySelector("#chat-messages");
-    const typingDiv = el("div", { id: "typing-indicator", style: "padding:14px;border-radius:12px;background:rgba(255,255,255,0.06);display:flex;gap:6px;max-width:80px;" });
-    typingDiv.innerHTML = '<div style="width:8px;height:8px;background:rgba(255,255,255,0.7);border-radius:50%;animation:typing 1.4s infinite;"></div><div style="width:8px;height:8px;background:rgba(255,255,255,0.7);border-radius:50%;animation:typing 1.4s infinite 0.2s;"></div><div style="width:8px;height:8px;background:rgba(255,255,255,0.7);border-radius:50%;animation:typing 1.4s infinite 0.4s;"></div>';
-    messagesDiv.appendChild(typingDiv);
-    messagesDiv.parentElement.scrollTop = messagesDiv.parentElement.scrollHeight;
+    const chat = this.container.querySelector("#chatMessages");
+    const ind = document.createElement("div");
+    ind.id = "typingIndicator";
+    ind.style.cssText = `
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 16px; border-radius: 12px; max-width: 140px;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,0.2);
+      align-self: flex-start;
+      animation: fadeIn 0.3s ease-out;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    `;
+    ind.innerHTML = `
+      <div style="display: flex; gap: 4px;">
+        <div style="width: 8px; height: 8px; background: #a5b4fc; border-radius: 50%; animation: pulse 1.4s infinite; box-shadow: 0 0 8px rgba(165,180,252,0.5);"></div>
+        <div style="width: 8px; height: 8px; background: #a5b4fc; border-radius: 50%; animation: pulse 1.4s infinite 0.2s; box-shadow: 0 0 8px rgba(165,180,252,0.5);"></div>
+        <div style="width: 8px; height: 8px; background: #a5b4fc; border-radius: 50%; animation: pulse 1.4s infinite 0.4s; box-shadow: 0 0 8px rgba(165,180,252,0.5);"></div>
+      </div>
+      <span style="font-size: 12px; color: #ffffff; font-weight: 500;">AI thinking...</span>
+    `;
+    chat.appendChild(ind);
+    chat.scrollTop = chat.scrollHeight;
   };
 
   AssistantSidebar.prototype.removeTypingIndicator = function () {
-    document.getElementById("typing-indicator")?.remove();
+    const ind = this.container.querySelector("#typingIndicator");
+    if (ind) ind.remove();
+  };
+
+  // Escape HTML to prevent XSS
+  AssistantSidebar.prototype.escapeHtml = function(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   };
 
   window.AssistantSidebar = AssistantSidebar;

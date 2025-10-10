@@ -78,8 +78,8 @@ class PopupController {
             this.showNotification('✅ Sidebar opened! Press Ctrl+Shift+L to toggle.', 'success');
             setTimeout(() => window.close(), 1500);
         } catch (error) {
-            console.error('Error opening sidebar:', error);
-            this.showNotification('❌ Connection failed. Please refresh the coding platform page and try again.', 'error');
+            console.error('Error opening sidebar:', error, chrome.runtime && chrome.runtime.lastError);
+            this.showNotification('❌ Could not open sidebar. Refresh the page and try again.', 'error');
         }
     }
 
@@ -94,8 +94,8 @@ class PopupController {
             this.showNotification('✅ Overlay opened! Press Ctrl+Shift+A to toggle.', 'success');
             setTimeout(() => window.close(), 1500);
         } catch (error) {
-            console.error('Error opening overlay:', error);
-            this.showNotification('❌ Connection failed. Please refresh the coding platform page and try again.', 'error');
+            console.error('Error opening overlay:', error, chrome.runtime && chrome.runtime.lastError);
+            this.showNotification('❌ Could not open overlay. Refresh the page and try again.', 'error');
         }
     }
 
