@@ -1,4 +1,4 @@
-/* CodeFlow AI Pro - Fixed with Quick Actions & Reopen Functionality */
+/* CodeFlow AI Pro - Complete with All Features */
 (function () {
   "use strict";
 
@@ -8,6 +8,9 @@
     this.isAwaitingResponse = false;
     this.selectedFiles = [];
     this.conversationHistory = [];
+    this.monitoringActive = false;
+    this.statsInterval = null;
+    this.contextMonitorInstance = null;
     this.init();
   };
 
@@ -15,6 +18,7 @@
     this.createDashboard();
     this.setupEvents();
     this.setupGlobalShortcut();
+    this.setupSelectionListener(); // NEW: For auto-fill
   };
 
   AssistantSidebar.prototype.createDashboard = function () {
@@ -23,7 +27,7 @@
       return;
     }
 
-    // 🔷 MAIN WRAPPER
+    // MAIN WRAPPER
     this.container = document.createElement("div");
     this.container.id = "codeflow-dashboard";
     this.container.style.cssText = `
@@ -37,7 +41,7 @@
       pointer-events: none;
     `;
 
-    // 🔷 HEADER BAR
+    // HEADER BAR
     const topBar = document.createElement("div");
     topBar.style.cssText = `
       height: 70px; display: flex; justify-content: space-between; align-items: center;
@@ -55,7 +59,7 @@
         <div id="projectName" style="font-size: 16px; font-weight: 600; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.4);">FiberHearts Dashboard Backend</div>
       </div>
       <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); border-radius: 20px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 4px 12px rgba(102,126,234,0.3);">
+        <div id="platformDisplay" style="display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); border-radius: 20px; color: white; font-size: 13px; font-weight: 500; box-shadow: 0 4px 12px rgba(102,126,234,0.3);">
           <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; box-shadow: 0 0 8px #4ade80;"></div>
           <span id="topicMonitor">Chef Payment API Integration</span>
         </div>
@@ -64,7 +68,7 @@
     `;
     this.container.appendChild(topBar);
 
-    // 🔷 CHAT BOX
+    // CHAT BOX
     const chatContainer = document.createElement("div");
     chatContainer.id = "chatContainer";
     chatContainer.style.cssText = `
@@ -92,12 +96,32 @@
         </div>
       </div>
 
+      <!-- Monitoring Control Panel -->
+      <div id="monitoringPanel" style="padding: 16px 24px; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 13px; font-weight: 600; color: #ffffff;">Real-Time Monitoring</span>
+          <button id="toggleMonitoring" style="padding: 6px 16px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(102,126,234,0.3);">
+            Start
+          </button>
+        </div>
+        <div id="monitoringStatus" style="font-size: 11px; color: rgba(255,255,255,0.7); display: none;">
+          <div style="margin-bottom: 4px;">
+            <span style="display: inline-block; width: 8px; height: 8px; background: #4ade80; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 6px #4ade80;"></span>
+            <span id="statusText">Monitoring active</span>
+          </div>
+          <div style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; font-size: 10px;">
+            <div>📊 Contexts: <span id="contextCount">0</span></div>
+            <div>🎯 Platform: <span id="platformName">Unknown</span></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Messages -->
       <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(0,0,0,0.02);">
         <div id="welcomeScreen" style="text-align:center; padding:40px;">
           <div style="font-size: 64px;">🚀</div>
           <h3 style="font-size: 20px; font-weight: 600; margin: 8px 0; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Welcome to CodeFlow AI</h3>
-          <p style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 24px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">I'm here to help you with your development tasks</p>
+          <p style="font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 24px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">Start monitoring to enable context-aware assistance</p>
           
           <!-- Quick Action Buttons -->
           <div style="display: flex; flex-direction: column; gap: 12px; max-width: 320px; margin: 0 auto;">
@@ -138,11 +162,9 @@
     this.container.appendChild(chatContainer);
     document.body.appendChild(this.container);
 
-    // Add CSS animations
     this.addStyles();
   };
 
-  // 🔷 ADD STYLES
   AssistantSidebar.prototype.addStyles = function () {
     if (document.getElementById("codeflow-styles")) return;
     
@@ -155,6 +177,11 @@
       }
       
       @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes slideUp {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
@@ -233,11 +260,15 @@
         opacity: 0.5;
         cursor: not-allowed;
       }
+
+      #toggleMonitoring:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 16px rgba(102,126,234,0.5);
+      }
     `;
     document.head.appendChild(style);
   };
 
-  // 🔷 EVENTS
   AssistantSidebar.prototype.setupEvents = function () {
     const self = this;
     const fileInput = this.container.querySelector("#fileInput");
@@ -281,9 +312,262 @@
         self.sendMessage();
       });
     });
+
+    // Monitoring toggle
+    const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
+    toggleMonitoringBtn.addEventListener("click", () => {
+      if (self.monitoringActive) {
+        self.stopMonitoring();
+      } else {
+        self.startMonitoring();
+      }
+    });
   };
 
-  // 🔷 KEYBOARD SHORTCUT
+  // NEW: Setup selection listener for auto-fill
+  AssistantSidebar.prototype.setupSelectionListener = function() {
+    const self = this;
+    
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'CODEFLOW_TEXT_SELECTED') {
+        self.showSelectedTextPreview(event.data.text, event.data.platform, event.data.context);
+      }
+    });
+  };
+
+  // NEW: Show selected text preview (Merlin-style)
+  AssistantSidebar.prototype.showSelectedTextPreview = function(text, platformInfo, selectionContext) {
+    const self = this;
+    
+    const existingPreview = this.container.querySelector('#selectedTextPreview');
+    if (existingPreview) existingPreview.remove();
+    
+    const isCodeBlock = selectionContext?.isCodeBlock;
+    
+    const preview = document.createElement('div');
+    preview.id = 'selectedTextPreview';
+    preview.style.cssText = `
+      padding: 12px 16px;
+      background: rgba(102,126,234,0.2);
+      border: 2px solid rgba(102,126,234,0.4);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: slideUp 0.3s ease-out;
+    `;
+    
+    preview.innerHTML = `
+      <div style="flex: 1; max-height: 80px; overflow-y: auto; font-size: 12px; color: rgba(255,255,255,0.9);">
+        <div style="font-weight: 600; margin-bottom: 4px; color: #a5b4fc;">
+          ${platformInfo?.icon || '📝'} Selected${isCodeBlock ? ' code' : ' text'} from ${platformInfo?.hostname || 'page'}
+        </div>
+        <div style="font-family: ${isCodeBlock ? "'Courier New', monospace" : 'inherit'}; white-space: pre-wrap; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;">
+${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
+        </div>
+      </div>
+      <button id="useSelectedText" style="
+        margin-left: 12px;
+        padding: 8px 14px;
+        background: rgba(102,126,234,0.9);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      ">Use →</button>
+    `;
+    
+    const inputWrapper = this.container.querySelector('#inputWrapper');
+    inputWrapper.parentElement.insertBefore(preview, inputWrapper);
+    
+    preview.querySelector('#useSelectedText').addEventListener('click', () => {
+      const chatInput = self.container.querySelector('#chatInput');
+      const prompt = isCodeBlock ? 
+        `Explain this code:\n\n${text}` : 
+        `Help me understand:\n\n${text}`;
+      chatInput.value = prompt;
+      chatInput.focus();
+      preview.remove();
+    });
+    
+    setTimeout(() => {
+      if (preview.parentElement) preview.remove();
+    }, 30000);
+  };
+
+  AssistantSidebar.prototype.startMonitoring = function() {
+    const self = this;
+    const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
+    const monitoringStatus = this.container.querySelector("#monitoringStatus");
+
+    console.log("[Sidebar] 🚀 Starting monitoring...");
+
+    // Create ContextMonitor instance if not exists
+    if (!self.contextMonitorInstance) {
+      if (window.ContextMonitor) {
+        console.log("[Sidebar] Creating ContextMonitor instance...");
+        self.contextMonitorInstance = new window.ContextMonitor();
+        console.log("[Sidebar] ✅ ContextMonitor created!");
+      } else {
+        console.error("[Sidebar] ❌ ContextMonitor class not found!");
+        alert("ERROR: ContextMonitor not loaded! Please refresh the page.");
+        return;
+      }
+    }
+
+    if (!self.contextMonitorInstance) {
+      console.error("[Sidebar] ❌ Failed to create ContextMonitor instance!");
+      return;
+    }
+
+    // Start monitoring DIRECTLY
+    console.log("[Sidebar] Starting ContextMonitor directly...");
+    self.contextMonitorInstance.start();
+    console.log("[Sidebar] ✅ ContextMonitor.start() called!");
+
+    // Notify background
+    if (chrome.runtime && chrome.runtime.id) {
+      chrome.runtime.sendMessage({ action: "startMonitoring" }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn("[Sidebar] Background notification failed");
+        }
+      });
+    }
+
+    // Update UI
+    self.monitoringActive = true;
+    toggleMonitoringBtn.textContent = "Stop";
+    toggleMonitoringBtn.style.background = "rgba(239, 68, 68, 0.9)";
+    monitoringStatus.style.display = "block";
+    
+    console.log("[Sidebar] ✅ Monitoring started");
+    
+    // Start stats polling
+    self.updateMonitoringStats();
+    
+    // NEW: Update platform display
+    self.updatePlatformDisplay();
+  };
+
+  AssistantSidebar.prototype.stopMonitoring = function() {
+    const self = this;
+    const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
+    const monitoringStatus = this.container.querySelector("#monitoringStatus");
+
+    console.log("[Sidebar] ⏹️ Stopping monitoring...");
+
+    // Stop stats interval FIRST
+    if (self.statsInterval) {
+      clearInterval(self.statsInterval);
+      self.statsInterval = null;
+      console.log("[Sidebar] Stats interval cleared");
+    }
+
+    // Stop ContextMonitor DIRECTLY
+    if (self.contextMonitorInstance) {
+      console.log("[Sidebar] Stopping ContextMonitor directly...");
+      self.contextMonitorInstance.stop();
+      console.log("[Sidebar] ✅ ContextMonitor.stop() called");
+    }
+
+    // Notify background
+    if (chrome.runtime && chrome.runtime.id) {
+      chrome.runtime.sendMessage({ action: "stopMonitoring" });
+    }
+
+    // Update UI
+    self.monitoringActive = false;
+    toggleMonitoringBtn.textContent = "Start";
+    toggleMonitoringBtn.style.background = "linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%)";
+    monitoringStatus.style.display = "none";
+    
+    console.log("[Sidebar] ✅ Monitoring stopped");
+  };
+
+  AssistantSidebar.prototype.updateMonitoringStats = function() {
+    const self = this;
+    
+    console.log("[Sidebar] Starting stats polling...");
+
+    if (self.statsInterval) {
+      clearInterval(self.statsInterval);
+    }
+    
+    self.statsInterval = setInterval(() => {
+      if (!self.monitoringActive) {
+        console.log("[Sidebar] Monitoring inactive, stopping stats polling");
+        clearInterval(self.statsInterval);
+        self.statsInterval = null;
+        return;
+      }
+
+      // Get stats DIRECTLY from ContextMonitor instance
+      if (self.contextMonitorInstance) {
+        const status = self.contextMonitorInstance.getStatus();
+        
+        const contextCount = self.container.querySelector("#contextCount");
+        const platformName = self.container.querySelector("#platformName");
+        
+        if (contextCount) {
+          contextCount.textContent = status.bufferSize || 0;
+        }
+        if (platformName) {
+          const platformInfo = status.platformInfo || {};
+          platformName.textContent = platformInfo.name || 'Web';
+        }
+      }
+
+      // ALSO check background for total sent count
+      if (chrome.runtime && chrome.runtime.id) {
+        try {
+          chrome.runtime.sendMessage({ action: "getMonitoringStatus" }, (response) => {
+            if (chrome.runtime.lastError) {
+              return;
+            }
+
+            if (response && response.success && response.contextCount > 0) {
+              const contextCount = self.container.querySelector("#contextCount");
+              if (contextCount) {
+                contextCount.textContent = response.contextCount;
+              }
+            }
+          });
+        } catch (error) {
+          console.error("[Sidebar] Exception in background check:", error);
+        }
+      }
+    }, 3000);
+  };
+
+  // NEW: Update platform display in header
+  AssistantSidebar.prototype.updatePlatformDisplay = function() {
+    const self = this;
+    
+    if (!self.contextMonitorInstance) return;
+    
+    // Wait for platform detection to complete
+    setTimeout(() => {
+      const platformInfo = self.contextMonitorInstance.getPlatformInfo();
+      const platformDisplay = self.container.querySelector('#platformDisplay');
+      
+      if (platformDisplay && platformInfo) {
+        platformDisplay.innerHTML = `
+          <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; box-shadow: 0 0 8px #4ade80;"></div>
+          <div style="text-align: left;">
+            <div style="font-size: 12px; font-weight: 600;">
+              ${platformInfo.icon || '💻'} ${platformInfo.name || 'Platform'}
+            </div>
+            <div style="font-size: 9px; opacity: 0.8;">${platformInfo.type || 'Web'}</div>
+          </div>
+        `;
+      }
+    }, 2000); // Wait for AI identification
+  };
+
   AssistantSidebar.prototype.setupGlobalShortcut = function () {
     const self = this;
     document.addEventListener("keydown", (e) => {
@@ -294,7 +578,6 @@
     });
   };
 
-  // 🔷 RENDER FILE PREVIEW
   AssistantSidebar.prototype.renderFilePreview = function() {
     const previewContainer = this.container.querySelector("#filePreview");
     previewContainer.innerHTML = "";
@@ -346,7 +629,6 @@
         `;
       }
 
-      // Remove button
       const remove = document.createElement("div");
       remove.textContent = "×";
       remove.style.cssText = `
@@ -378,7 +660,6 @@
 
       preview.appendChild(remove);
 
-      // File name tooltip
       const fileName = document.createElement("div");
       fileName.textContent = file.name;
       fileName.style.cssText = `
@@ -412,7 +693,6 @@
     });
   };
 
-  // 🔷 SHOW/HIDE/TOGGLE
   AssistantSidebar.prototype.show = function () {
     if (this.container) {
       this.container.style.display = "flex";
@@ -428,6 +708,11 @@
     if (this.container) {
       this.container.style.display = "none";
       this.isVisible = false;
+      
+      if (this.statsInterval) {
+        clearInterval(this.statsInterval);
+        this.statsInterval = null;
+      }
     }
   };
 
@@ -439,7 +724,6 @@
     }
   };
 
-  // 🔷 SEND MESSAGE
   AssistantSidebar.prototype.sendMessage = function () {
     const input = this.container.querySelector("#chatInput");
     const sendBtn = this.container.querySelector("#sendBtn");
@@ -449,31 +733,25 @@
     if (!text && !hasFiles) return;
     if (this.isAwaitingResponse) return;
 
-    // Remove welcome screen
     const welcomeScreen = this.container.querySelector("#welcomeScreen");
     if (welcomeScreen) welcomeScreen.remove();
 
-    // Add user message
     if (text) {
       this.addMessage("user", text);
       this.conversationHistory.push({ role: "user", content: text });
     }
 
-    // Add file messages
     this.selectedFiles.forEach((f) => this.addFileMessage(f));
 
-    // Clear input and files
     this.selectedFiles = [];
     this.renderFilePreview();
     input.value = "";
     input.style.height = "auto";
 
-    // Show typing indicator
     this.isAwaitingResponse = true;
     sendBtn.disabled = true;
     this.addTypingIndicator();
 
-    // Send to background script
     const self = this;
     chrome.runtime.sendMessage({
       action: "chatMessage",
@@ -499,15 +777,13 @@
     });
   };
 
-  // 🔷 MESSAGE HANDLERS
   AssistantSidebar.prototype.addMessage = function (sender, msg) {
     const chat = this.container.querySelector("#chatMessages");
     const el = document.createElement("div");
     
-    // Format markdown-style code blocks and bold text
     let formattedMsg = msg
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+      .replace(/``````/g, (match, lang, code) => {
         return `<pre style="background: rgba(0,0,0,0.4); color: #e5e7eb; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin: 8px 0; border: 1px solid rgba(255,255,255,0.1);"><code>${this.escapeHtml(code)}</code></pre>`;
       })
       .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">$1</code>')
@@ -593,7 +869,6 @@
     if (ind) ind.remove();
   };
 
-  // Escape HTML to prevent XSS
   AssistantSidebar.prototype.escapeHtml = function(text) {
     const div = document.createElement('div');
     div.textContent = text;

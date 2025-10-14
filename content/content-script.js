@@ -1,224 +1,178 @@
-// Unified Content Script for CodeFlow AI
+/* CodeFlow AI - Content Script with Privacy-First Lazy Initialization */
 (function() {
-    // Use a flag to ensure the script only runs once per page
-    if (window.codeFlowInitialized) {
+    'use strict';
+
+    console.log("CodeFlow AI: Content script loaded (passive mode)");
+
+    // Prevent multiple initializations
+    if (window.CodeFlowAIInitialized) {
+        console.log("CodeFlow AI: Already initialized, skipping...");
         return;
     }
-    window.codeFlowInitialized = true;
+    window.CodeFlowAIInitialized = true;
 
-    console.log('CodeFlow AI: Unified Content Script Initializing...');
+    // Wait for all dependencies to load
+    function waitForDependencies(callback) {
+        let attempts = 0;
+        const maxAttempts = 50;
 
-    // These will hold the instances of our UI components
-    let assistantOverlay = null;
-    let assistantSidebar = null;
+        const checkInterval = setInterval(() => {
+            attempts++;
+            
+            const hasAssistantSidebar = typeof window.AssistantSidebar !== 'undefined';
+            const hasContextMonitor = typeof window.ContextMonitor !== 'undefined';
 
-    // The CodeContextMonitor class captures what's happening on the page
-    class CodeContextMonitor {
-        constructor() {
-            this.platform = this.detectPlatform();
-            this.lastCapturedCode = '';
-            this.errorPatterns = [];
-            this.codeChangeObserver = null;
-            this.assistantActive = false;
-        }
-
-        // Detect which coding platform we're on
-        detectPlatform() {
-            const hostname = window.location.hostname;
-
-            if (hostname.includes('replit.com')) return 'replit';
-            if (hostname.includes('leetcode.com')) return 'leetcode';
-            if (hostname.includes('colab.research.google.com')) return 'colab';
-            if (hostname.includes('github.com')) return 'github';
-            if (hostname.includes('codepen.io')) return 'codepen';
-            if (hostname.includes('stackblitz.com')) return 'stackblitz';
-
-            return 'generic';
-        }
-
-        // Platform-specific code extraction
-        extractCode() {
-            switch (this.platform) {
-                case 'replit':
-                    return this.extractReplitCode();
-                case 'leetcode':
-                    return this.extractLeetCodeCode();
-                case 'colab':
-                    return this.extractColabCode();
-                case 'github':
-                    return this.extractGitHubCode();
-                default:
-                    return this.extractGenericCode();
+            if (attempts % 10 === 0) {
+                console.log("Dependency check attempt", attempts, {
+                    hasAssistantSidebar,
+                    hasContextMonitor
+                });
             }
-        }
 
-        extractReplitCode() {
-            const codeElements = document.querySelectorAll('.view-line');
-            let code = Array.from(codeElements).map(line => line.textContent).join('\n');
-            const fileTab = document.querySelector('.tab-item.active');
-            const fileName = fileTab ? fileTab.textContent.trim() : 'unknown';
-            return { code, fileName, language: this.detectLanguage(fileName), platform: 'replit' };
-        }
-
-        extractLeetCodeCode() {
-            const editorContainer = document.querySelector('.monaco-editor');
-            if (!editorContainer) return { code: '', fileName: 'solution', language: 'unknown' };
-            const codeLines = editorContainer.querySelectorAll('.view-line');
-            const code = Array.from(codeLines).map(line => line.textContent).join('\n');
-            const problemTitle = document.querySelector('[data-cy="question-title"]');
-            const title = problemTitle ? problemTitle.textContent.trim() : 'Problem';
-            const langButton = document.querySelector('button[id^="headlessui-listbox-button"]');
-            const language = langButton ? langButton.textContent.trim() : 'unknown';
-            return { code, fileName: title, language: language.toLowerCase(), platform: 'leetcode', problemContext: this.extractProblemContext() };
-        }
-
-        extractColabCode() {
-            const cells = document.querySelectorAll('.cell');
-            let notebooks = [];
-            cells.forEach((cell, index) => {
-                const codeElement = cell.querySelector('.inputarea');
-                if (codeElement) {
-                    notebooks.push({ cellIndex: index, code: codeElement.textContent, type: 'code' });
-                }
-            });
-            return { code: notebooks.map(n => n.code).join('\n\n'), fileName: 'notebook', language: 'python', platform: 'colab', cells: notebooks };
-        }
-
-        extractGitHubCode() {
-            const lines = document.querySelectorAll('.blob-code-inner');
-            if (!lines.length) return { code: '', fileName: 'unknown', language: 'unknown' };
-            const code = Array.from(lines).map(line => line.textContent).join('\n');
-            const fileNameElement = document.querySelector('.final-path');
-            const fileName = fileNameElement ? fileNameElement.textContent : 'file';
-            return { code, fileName, language: this.detectLanguage(fileName), platform: 'github' };
-        }
-
-        extractGenericCode() {
-            let code = '';
-            const monacoLines = document.querySelectorAll('.view-line');
-            if (monacoLines.length > 0) {
-                code = Array.from(monacoLines).map(l => l.textContent).join('\n');
-            } else {
-                const textarea = document.querySelector('textarea[class*="code"]');
-                if (textarea) code = textarea.value;
+            if (hasAssistantSidebar && hasContextMonitor) {
+                // Minimum requirements met
+                clearInterval(checkInterval);
+                callback();
+            } else if (attempts >= maxAttempts) {
+                clearInterval(checkInterval);
+                console.error("CodeFlow AI: Failed to load dependencies");
+                console.error("Missing:", {
+                    sidebar: !hasAssistantSidebar,
+                    contextMonitor: !hasContextMonitor
+                });
             }
-            return { code, fileName: 'code', language: 'unknown', platform: 'generic' };
-        }
-
-        detectLanguage(fileName) {
-            const ext = fileName.split('.').pop().toLowerCase();
-            const langMap = { 'js': 'javascript', 'ts': 'typescript', 'py': 'python', 'java': 'java', 'cpp': 'cpp', 'c': 'c', 'html': 'html', 'css': 'css' };
-            return langMap[ext] || 'unknown';
-        }
-
-        extractProblemContext() {
-            const description = document.querySelector('[data-track-load="description_content"]');
-            if (!description) return null;
-            return { description: description.textContent.trim().substring(0, 500), difficulty: document.querySelector('[diff]')?.textContent || 'Unknown' };
-        }
-
-        captureFullContext() {
-            const codeData = this.extractCode();
-            const context = { ...codeData, url: window.location.href, timestamp: Date.now(), codeChanged: codeData.code !== this.lastCapturedCode };
-            this.lastCapturedCode = codeData.code;
-            return context;
-        }
-
-        startObserving() {
-            if (this.codeChangeObserver) this.codeChangeObserver.disconnect();
-            this.codeChangeObserver = new MutationObserver(() => {
-                clearTimeout(this.changeTimeout);
-                this.changeTimeout = setTimeout(() => this.onCodeChange(), 2000);
-            });
-            const editorArea = document.querySelector('.monaco-editor, .CodeMirror, body');
-            this.codeChangeObserver.observe(editorArea, { childList: true, subtree: true, characterData: true });
-            console.log("CodeFlow AI: Started observing code changes.");
-        }
-
-        onCodeChange() {
-            const context = this.captureFullContext();
-            chrome.runtime.sendMessage({ action: 'contextCaptured', context: context });
-        }
-
-        stopObserving() {
-            if (this.codeChangeObserver) {
-                this.codeChangeObserver.disconnect();
-                console.log("CodeFlow AI: Stopped observing code changes.");
-            }
-        }
+        }, 100);
     }
 
-    // Initialize the monitor
-    const monitor = new CodeContextMonitor();
+    // Initialize all components
+    waitForDependencies(() => {
+        console.log("CodeFlow AI: Dependencies loaded, initializing...");
 
-    // The single, unified message listener for this content script
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        console.log('CodeFlow AI: Message received in content script ->', request.action);
+        // Initialize Context Monitor (LAZY - No auto-detection!)
+        let contextMonitor = null;
+        if (window.ContextMonitor) {
+            try {
+                contextMonitor = new window.ContextMonitor();
+                console.log("✅ Context Monitor created (passive - no detection yet)");
+            } catch (e) {
+                console.error("❌ Context Monitor creation failed:", e);
+            }
+        } else {
+            console.error("❌ CRITICAL: ContextMonitor class not found!");
+        }
 
-        // --- Sidebar Actions ---
-        if (request.action === "toggleSidebar" || request.action === "showSidebar" || request.action === "hideSidebar") {
-            if (!assistantSidebar) {
-                try {
-                    assistantSidebar = new AssistantSidebar();
-                    console.log("CodeFlow AI: Sidebar initialized on demand.");
-                } catch (e) {
-                    console.error("CodeFlow AI: Failed to initialize sidebar:", e);
-                    sendResponse({ success: false, error: e.message });
-                    return true;
+        // Initialize Assistant Sidebar (REQUIRED)
+        let assistantSidebar = null;
+        if (window.AssistantSidebar) {
+            try {
+                assistantSidebar = new window.AssistantSidebar();
+                console.log("✅ Assistant Sidebar initialized");
+            } catch (e) {
+                console.error("❌ CRITICAL: Assistant Sidebar failed:", e);
+                return;
+            }
+        } else {
+            console.error("❌ CRITICAL: AssistantSidebar class not found!");
+            return;
+        }
+
+        // Message handler for background script
+        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+            try {
+                if (request.action === 'ping') {
+                    sendResponse({ success: true, ready: true });
                 }
-            }
-
-            if (request.action === "toggleSidebar") assistantSidebar.toggle();
-            else if (request.action === "showSidebar") assistantSidebar.show();
-            else if (request.action === "hideSidebar") assistantSidebar.hide();
-            
-            sendResponse({ success: true, visible: assistantSidebar ? assistantSidebar.isVisible : false });
-        }
-
-        // --- Overlay & Monitoring Actions ---
-        else if (request.action === 'toggleAssistant') {
-            if (!assistantOverlay) {
-                try {
-                    assistantOverlay = new AssistantOverlay();
-                    console.log("CodeFlow AI: Overlay initialized on demand.");
-                    chrome.storage.local.get('taskDescription', (data) => {
-                        if (assistantOverlay) assistantOverlay.updateTask(data.taskDescription);
-                    });
-                } catch (e) {
-                    console.error("CodeFlow AI: Failed to initialize overlay:", e);
-                    sendResponse({ success: false, error: e.message });
-                    return true;
+                else if (request.action === 'toggleSidebar') {
+                    if (assistantSidebar) {
+                        assistantSidebar.toggle();
+                        console.log("✅ Sidebar toggled");
+                        sendResponse({ success: true });
+                    } else {
+                        sendResponse({ success: false, error: "Sidebar not initialized" });
+                    }
                 }
+                else if (request.action === 'startMonitoring') {
+                    console.log("🚀 Starting monitoring (user-initiated)...");
+                    
+                    if (contextMonitor) {
+                        contextMonitor.start();
+                        
+                        // Get status after starting
+                        setTimeout(() => {
+                            const status = contextMonitor.getStatus();
+                            console.log("📊 Monitoring status:", status);
+                        }, 1000);
+                        
+                        sendResponse({ 
+                            success: true, 
+                            message: "Monitoring started"
+                        });
+                    } else {
+                        console.error("❌ Context monitor not available");
+                        sendResponse({ success: false, message: "Context monitor not available" });
+                    }
+                }
+                else if (request.action === 'stopMonitoring') {
+                    console.log("⏹️ Stopping monitoring...");
+                    
+                    if (contextMonitor) {
+                        contextMonitor.stop();
+                        console.log("✅ Context monitor stopped");
+                        sendResponse({ success: true, message: "Monitoring stopped" });
+                    } else {
+                        sendResponse({ success: false, message: "Context monitor not available" });
+                    }
+                }
+                else if (request.action === 'getMonitoringStatus') {
+                    if (contextMonitor) {
+                        const status = contextMonitor.getStatus();
+                        sendResponse({ 
+                            success: true, 
+                            isMonitoring: status.isMonitoring,
+                            isInitialized: status.isInitialized,
+                            platform: status.platformInfo?.name || 'Unknown',
+                            platformType: status.platformInfo?.type || 'Web',
+                            contextCount: status.bufferSize || 0,
+                            lastContext: status.lastContext
+                        });
+                    } else {
+                        sendResponse({ 
+                            success: false, 
+                            isMonitoring: false,
+                            platform: 'unknown',
+                            contextCount: 0
+                        });
+                    }
+                }
+                else {
+                    console.log("⚠️ Unknown action:", request.action);
+                    sendResponse({ success: false, message: "Unknown action" });
+                }
+            } catch (error) {
+                console.error("❌ Error handling message:", error);
+                sendResponse({ success: false, error: error.message });
             }
 
-            monitor.assistantActive = request.isActive;
-            if (request.isActive) {
-                monitor.startObserving();
-                assistantOverlay.show();
-            } else {
-                monitor.stopObserving();
-                assistantOverlay.hide();
-            }
-            sendResponse({ success: true });
+            return true; // Keep message channel open for async responses
+        });
+
+        console.log("🚀 CodeFlow AI: Ready (privacy-first mode)");
+        console.log("ℹ️ No platform detection until user starts monitoring");
+
+        // Send ready signal to background
+        try {
+            chrome.runtime.sendMessage({
+                action: 'contentScriptReady',
+                url: window.location.href
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.log("Background script not ready yet");
+                } else {
+                    console.log("✅ Connected to background script");
+                }
+            });
+        } catch (e) {
+            console.warn("Could not send ready signal:", e);
         }
-
-        // --- Data Update Actions for UI from Background Script ---
-        else if (request.action === 'updateSuggestions') {
-            if (assistantOverlay && assistantOverlay.isVisible) {
-                assistantOverlay.updateSuggestions(request);
-            }
-            sendResponse({ success: true });
-        } 
-        else if (request.action === 'showDebugHelp') {
-            if (assistantOverlay && assistantOverlay.isVisible) {
-                assistantOverlay.showDebugHelp(request.help);
-            }
-            sendResponse({ success: true });
-        }
-
-        return true; // Keep the message channel open for asynchronous responses
     });
-
-    console.log('CodeFlow AI: Assistant loaded on', monitor.platform);
-
 })();

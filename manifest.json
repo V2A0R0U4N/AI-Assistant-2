@@ -1,12 +1,12 @@
 {
     "manifest_version": 3,
-    "name": "CodeFlow AI Assistant",
-    "version": "1.0.0",
-    "description": "Live AI assistant that monitors your coding workflow and provides real-time guidance",
+    "name": "CodeFlow AI Pro - Real-Time Assistant",
+    "version": "2.0.0",
+    "description": "AI-powered coding assistant with real-time context monitoring for developers",
     "permissions": [
         "activeTab",
-        "scripting",
         "storage",
+        "scripting",
         "tabs"
     ],
     "host_permissions": [
@@ -16,7 +16,9 @@
         "https://github.com/*",
         "https://codepen.io/*",
         "https://stackblitz.com/*",
-        "https://generativelanguage.googleapis.com/*"
+        "https://generativelanguage.googleapis.com/*",
+        "http://localhost:5000/*",
+        "<all_urls>"
     ],
     "background": {
         "service_worker": "background/service-worker.js"
@@ -29,9 +31,13 @@
                 "https://colab.research.google.com/*",
                 "https://github.com/*",
                 "https://codepen.io/*",
-                "https://stackblitz.com/*"
+                "https://stackblitz.com/*",
+                "<all_urls>"
             ],
             "js": [
+                "utils/api.js",
+                "content/context-monitor.js",
+                "content/summarizer.js",
                 "content/overlay-ui.js",
                 "content/sidebar-ui.js",
                 "content/content-script.js"
@@ -45,27 +51,15 @@
     "action": {
         "default_popup": "popup/popup.html"
     },
-    "commands": {
-        "toggle-assistant": {
-            "suggested_key": {
-                "default": "Ctrl+Shift+A",
-                "mac": "Command+Shift+A"
-            },
-            "description": "Toggle CodeFlow AI Assistant Overlay"
-        },
-        "toggle-sidebar": {
-            "suggested_key": {
-                "default": "Ctrl+Shift+L",
-                "mac": "Command+Shift+L"
-            },
-            "description": "Toggle CodeFlow AI Sidebar"
-        },
-        "quick-help": {
-            "suggested_key": {
-                "default": "Ctrl+Shift+H",
-                "mac": "Command+Shift+H"
-            },
-            "description": "Get quick help for current code"
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "assets/styles/*",
+                "icons/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
         }
-    }
+    ]
 }
