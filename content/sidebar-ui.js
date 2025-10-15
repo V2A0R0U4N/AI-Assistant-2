@@ -167,7 +167,7 @@
 
   AssistantSidebar.prototype.addStyles = function () {
     if (document.getElementById("codeflow-styles")) return;
-    
+
     const style = document.createElement("style");
     style.id = "codeflow-styles";
     style.textContent = `
@@ -231,6 +231,50 @@
       #chatMessages::-webkit-scrollbar-thumb:hover {
         background: rgba(255,255,255,0.3);
       }
+
+      #selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+#selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+#selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar-thumb {
+  background: rgba(102,126,234,0.5);
+  border-radius: 3px;
+}
+
+#selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(102,126,234,0.7);
+}
+
+#previewTextContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+#previewTextContent::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  margin: 4px;
+}
+
+#previewTextContent::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgba(102,126,234,0.6) 0%, rgba(118,75,162,0.6) 100%);
+  border-radius: 4px;
+  border: 2px solid rgba(0,0,0,0.3);
+}
+
+#previewTextContent::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgba(102,126,234,0.8) 0%, rgba(118,75,162,0.8) 100%);
+}
+
+/* Fade out animation */
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
       
       #closeDashboard:hover {
         background: rgba(255,255,255,0.2) !important;
@@ -289,7 +333,7 @@
         self.sendMessage();
       }
     });
-    
+
     input.addEventListener("input", function () {
       this.style.height = "auto";
       this.style.height = Math.min(this.scrollHeight, 120) + "px";
@@ -297,7 +341,7 @@
 
     // Send button
     this.container.querySelector("#sendBtn").addEventListener("click", () => self.sendMessage());
-    
+
     // Close button
     this.container.querySelector("#closeDashboard").addEventListener("click", () => {
       self.hide();
@@ -306,7 +350,7 @@
     // Quick action buttons
     const quickBtns = this.container.querySelectorAll(".quick-action-btn");
     quickBtns.forEach(btn => {
-      btn.addEventListener("click", function() {
+      btn.addEventListener("click", function () {
         const action = this.getAttribute("data-action");
         self.container.querySelector("#chatInput").value = action;
         self.sendMessage();
@@ -325,9 +369,9 @@
   };
 
   // NEW: Setup selection listener for auto-fill
-  AssistantSidebar.prototype.setupSelectionListener = function() {
+  AssistantSidebar.prototype.setupSelectionListener = function () {
     const self = this;
-    
+
     window.addEventListener('message', (event) => {
       if (event.data.type === 'CODEFLOW_TEXT_SELECTED') {
         self.showSelectedTextPreview(event.data.text, event.data.platform, event.data.context);
@@ -336,70 +380,261 @@
   };
 
   // NEW: Show selected text preview (Merlin-style)
-  AssistantSidebar.prototype.showSelectedTextPreview = function(text, platformInfo, selectionContext) {
+ AssistantSidebar.prototype.showSelectedTextPreview = function(text, platformInfo, selectionContext) {
     const self = this;
     
+    // Remove existing preview
     const existingPreview = this.container.querySelector('#selectedTextPreview');
     if (existingPreview) existingPreview.remove();
     
     const isCodeBlock = selectionContext?.isCodeBlock;
     
+    // Calculate preview dimensions
+    const lines = text.split('\n');
+    const totalLines = lines.length;
+    const isLongText = totalLines > 3 || text.length > 300;
+    
+    // Create preview container
     const preview = document.createElement('div');
     preview.id = 'selectedTextPreview';
     preview.style.cssText = `
-      padding: 12px 16px;
-      background: rgba(102,126,234,0.2);
-      border: 2px solid rgba(102,126,234,0.4);
-      border-radius: 10px;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      animation: slideUp 0.3s ease-out;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, rgba(102,126,234,0.15) 0%, rgba(118,75,162,0.15) 100%);
+        border: 2px solid rgba(102,126,234,0.4);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        animation: slideUp 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        position: relative;
     `;
     
-    preview.innerHTML = `
-      <div style="flex: 1; max-height: 80px; overflow-y: auto; font-size: 12px; color: rgba(255,255,255,0.9);">
-        <div style="font-weight: 600; margin-bottom: 4px; color: #a5b4fc;">
-          ${platformInfo?.icon || '📝'} Selected${isCodeBlock ? ' code' : ' text'} from ${platformInfo?.hostname || 'page'}
-        </div>
-        <div style="font-family: ${isCodeBlock ? "'Courier New', monospace" : 'inherit'}; white-space: pre-wrap; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;">
-${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
-        </div>
-      </div>
-      <button id="useSelectedText" style="
-        margin-left: 12px;
-        padding: 8px 14px;
-        background: rgba(102,126,234,0.9);
+    // Close button (X) - top right corner
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '×';
+    closeButton.style.cssText = `
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.8);
         border: none;
-        border-radius: 8px;
         color: white;
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 18px;
+        font-weight: bold;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: all 0.2s;
-      ">Use →</button>
+        z-index: 10;
+        line-height: 1;
     `;
     
+    closeButton.addEventListener('mouseenter', () => {
+        closeButton.style.background = 'rgba(239, 68, 68, 1)';
+        closeButton.style.transform = 'scale(1.1)';
+    });
+    
+    closeButton.addEventListener('mouseleave', () => {
+        closeButton.style.background = 'rgba(239, 68, 68, 0.8)';
+        closeButton.style.transform = 'scale(1)';
+    });
+    
+    closeButton.addEventListener('click', () => {
+        preview.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => preview.remove(), 300);
+    });
+    
+    preview.appendChild(closeButton);
+    
+    // Header with platform info
+    const header = document.createElement('div');
+    header.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding-right: 30px;
+    `;
+    
+    header.innerHTML = `
+        <span style="font-size: 16px;">${platformInfo?.icon || '📝'}</span>
+        <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 12px; color: #a5b4fc;">
+                Selected${isCodeBlock ? ' Code' : ' Text'} • Context Captured
+            </div>
+            <div style="font-size: 10px; color: rgba(255,255,255,0.6);">
+                from ${platformInfo?.hostname || 'page'} • ${totalLines} line${totalLines > 1 ? 's' : ''} • ${text.length} chars
+            </div>
+        </div>
+        <div style="
+            padding: 4px 10px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            border-radius: 12px;
+            font-size: 10px;
+            color: #4ade80;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        ">
+            <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block;"></span>
+            Active
+        </div>
+    `;
+    
+    // Content container with collapse/expand
+    const contentContainer = document.createElement('div');
+    contentContainer.id = 'previewContent';
+    
+    // Preview text (collapsed by default if long)
+    const previewText = document.createElement('div');
+    previewText.id = 'previewTextContent';
+    previewText.style.cssText = `
+        font-family: ${isCodeBlock ? "'Courier New', 'Consolas', monospace" : 'inherit'};
+        font-size: ${isCodeBlock ? '11px' : '12px'};
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background: rgba(0,0,0,0.4);
+        padding: 12px;
+        border-radius: 8px;
+        color: rgba(255,255,255,0.95);
+        line-height: 1.6;
+        max-height: ${isLongText ? '80px' : 'none'};
+        overflow: hidden;
+        position: relative;
+        transition: max-height 0.3s ease;
+    `;
+    
+    previewText.textContent = text;
+    
+    // Add fade gradient for collapsed state
+    if (isLongText) {
+        const fadeOverlay = document.createElement('div');
+        fadeOverlay.id = 'fadeOverlay';
+        fadeOverlay.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.6));
+            pointer-events: none;
+        `;
+        previewText.style.position = 'relative';
+        previewText.appendChild(fadeOverlay);
+    }
+    
+    contentContainer.appendChild(previewText);
+    
+    // Expand/Collapse button (only for long text)
+    if (isLongText) {
+        const expandButton = document.createElement('button');
+        expandButton.id = 'expandButton';
+        expandButton.style.cssText = `
+            width: 100%;
+            padding: 6px 12px;
+            margin-top: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: rgba(255,255,255,0.8);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        `;
+        
+        expandButton.innerHTML = `
+            <span style="font-size: 14px;">▼</span>
+            <span>Show full text (${totalLines} lines)</span>
+        `;
+        
+        let isExpanded = false;
+        
+        expandButton.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            const fadeOverlay = previewText.querySelector('#fadeOverlay');
+            
+            if (isExpanded) {
+                // Expand
+                const fullHeight = Math.min(previewText.scrollHeight, 400);
+                previewText.style.maxHeight = fullHeight + 'px';
+                previewText.style.overflowY = 'auto';
+                expandButton.innerHTML = `
+                    <span style="font-size: 14px; transform: rotate(180deg); display: inline-block;">▼</span>
+                    <span>Show less</span>
+                `;
+                if (fadeOverlay) fadeOverlay.style.display = 'none';
+            } else {
+                // Collapse
+                previewText.style.maxHeight = '80px';
+                previewText.style.overflowY = 'hidden';
+                expandButton.innerHTML = `
+                    <span style="font-size: 14px;">▼</span>
+                    <span>Show full text (${totalLines} lines)</span>
+                `;
+                if (fadeOverlay) fadeOverlay.style.display = 'block';
+            }
+        });
+        
+        expandButton.addEventListener('mouseenter', () => {
+            expandButton.style.background = 'rgba(255,255,255,0.15)';
+        });
+        
+        expandButton.addEventListener('mouseleave', () => {
+            expandButton.style.background = 'rgba(255,255,255,0.1)';
+        });
+        
+        contentContainer.appendChild(expandButton);
+    }
+    
+    // Info footer
+    const footer = document.createElement('div');
+    footer.style.cssText = `
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        color: rgba(255,255,255,0.6);
+    `;
+    
+    footer.innerHTML = `
+        <span style="font-size: 12px;">ℹ️</span>
+        <span>This context is automatically available to AI • Ask anything about it</span>
+    `;
+    
+    // Assemble preview
+    preview.appendChild(header);
+    preview.appendChild(contentContainer);
+    preview.appendChild(footer);
+    
+    // Insert into DOM
     const inputWrapper = this.container.querySelector('#inputWrapper');
     inputWrapper.parentElement.insertBefore(preview, inputWrapper);
     
-    preview.querySelector('#useSelectedText').addEventListener('click', () => {
-      const chatInput = self.container.querySelector('#chatInput');
-      const prompt = isCodeBlock ? 
-        `Explain this code:\n\n${text}` : 
-        `Help me understand:\n\n${text}`;
-      chatInput.value = prompt;
-      chatInput.focus();
-      preview.remove();
-    });
-    
+    // Auto-remove after 60 seconds
     setTimeout(() => {
-      if (preview.parentElement) preview.remove();
-    }, 30000);
-  };
+        if (preview.parentElement) {
+            preview.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => preview.remove(), 300);
+        }
+    }, 60000);
+};
 
-  AssistantSidebar.prototype.startMonitoring = function() {
+
+
+
+  AssistantSidebar.prototype.startMonitoring = function () {
     const self = this;
     const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
     const monitoringStatus = this.container.querySelector("#monitoringStatus");
@@ -443,17 +678,17 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
     toggleMonitoringBtn.textContent = "Stop";
     toggleMonitoringBtn.style.background = "rgba(239, 68, 68, 0.9)";
     monitoringStatus.style.display = "block";
-    
+
     console.log("[Sidebar] ✅ Monitoring started");
-    
+
     // Start stats polling
     self.updateMonitoringStats();
-    
+
     // NEW: Update platform display
     self.updatePlatformDisplay();
   };
 
-  AssistantSidebar.prototype.stopMonitoring = function() {
+  AssistantSidebar.prototype.stopMonitoring = function () {
     const self = this;
     const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
     const monitoringStatus = this.container.querySelector("#monitoringStatus");
@@ -484,19 +719,19 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
     toggleMonitoringBtn.textContent = "Start";
     toggleMonitoringBtn.style.background = "linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%)";
     monitoringStatus.style.display = "none";
-    
+
     console.log("[Sidebar] ✅ Monitoring stopped");
   };
 
-  AssistantSidebar.prototype.updateMonitoringStats = function() {
+  AssistantSidebar.prototype.updateMonitoringStats = function () {
     const self = this;
-    
+
     console.log("[Sidebar] Starting stats polling...");
 
     if (self.statsInterval) {
       clearInterval(self.statsInterval);
     }
-    
+
     self.statsInterval = setInterval(() => {
       if (!self.monitoringActive) {
         console.log("[Sidebar] Monitoring inactive, stopping stats polling");
@@ -508,10 +743,10 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
       // Get stats DIRECTLY from ContextMonitor instance
       if (self.contextMonitorInstance) {
         const status = self.contextMonitorInstance.getStatus();
-        
+
         const contextCount = self.container.querySelector("#contextCount");
         const platformName = self.container.querySelector("#platformName");
-        
+
         if (contextCount) {
           contextCount.textContent = status.bufferSize || 0;
         }
@@ -544,16 +779,16 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
   };
 
   // NEW: Update platform display in header
-  AssistantSidebar.prototype.updatePlatformDisplay = function() {
+  AssistantSidebar.prototype.updatePlatformDisplay = function () {
     const self = this;
-    
+
     if (!self.contextMonitorInstance) return;
-    
+
     // Wait for platform detection to complete
     setTimeout(() => {
       const platformInfo = self.contextMonitorInstance.getPlatformInfo();
       const platformDisplay = self.container.querySelector('#platformDisplay');
-      
+
       if (platformDisplay && platformInfo) {
         platformDisplay.innerHTML = `
           <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; box-shadow: 0 0 8px #4ade80;"></div>
@@ -578,7 +813,7 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
     });
   };
 
-  AssistantSidebar.prototype.renderFilePreview = function() {
+  AssistantSidebar.prototype.renderFilePreview = function () {
     const previewContainer = this.container.querySelector("#filePreview");
     previewContainer.innerHTML = "";
 
@@ -642,12 +877,12 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
         box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
         transition: all 0.2s;
       `;
-      
+
       remove.addEventListener("mouseenter", () => {
         remove.style.background = "#dc2626";
         remove.style.transform = "scale(1.1)";
       });
-      
+
       remove.addEventListener("mouseleave", () => {
         remove.style.background = "#ef4444";
         remove.style.transform = "scale(1)";
@@ -708,7 +943,7 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
     if (this.container) {
       this.container.style.display = "none";
       this.isVisible = false;
-      
+
       if (this.statsInterval) {
         clearInterval(this.statsInterval);
         this.statsInterval = null;
@@ -756,7 +991,7 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
     chrome.runtime.sendMessage({
       action: "chatMessage",
       message: text
-    }, function(response) {
+    }, function (response) {
       self.removeTypingIndicator();
       self.isAwaitingResponse = false;
       sendBtn.disabled = false;
@@ -780,7 +1015,7 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
   AssistantSidebar.prototype.addMessage = function (sender, msg) {
     const chat = this.container.querySelector("#chatMessages");
     const el = document.createElement("div");
-    
+
     let formattedMsg = msg
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/``````/g, (match, lang, code) => {
@@ -788,7 +1023,7 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
       })
       .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">$1</code>')
       .replace(/\n/g, '<br>');
-    
+
     el.innerHTML = formattedMsg;
     el.style.cssText = `
       padding: 14px 16px; border-radius: 12px; max-width: 85%;
@@ -820,7 +1055,7 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
       animation: fadeIn 0.3s ease-out;
       box-shadow: 0 2px 12px rgba(0,0,0,0.15);
     `;
-    
+
     const name = document.createElement("div");
     name.textContent = `${file.type.startsWith("image/") ? "🖼️" : "📄"} ${file.name}`;
     name.style.cssText = "font-size: 13px; color: #ffffff; font-weight: 500;";
@@ -869,7 +1104,7 @@ ${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}
     if (ind) ind.remove();
   };
 
-  AssistantSidebar.prototype.escapeHtml = function(text) {
+  AssistantSidebar.prototype.escapeHtml = function (text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;

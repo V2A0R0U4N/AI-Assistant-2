@@ -1,4 +1,4 @@
-/* CodeFlow AI - Background Service Worker with AI Platform Identification */
+/* CodeFlow AI - Service Worker with Robust Error Handling */
 
 console.log("CodeFlow AI: Service Worker Started");
 
@@ -132,7 +132,6 @@ function handleStopMonitoring() {
 
 function handleTaskUpdate(request) {
     console.log("Service Worker: 📝 Task updated:", request.task);
-    // Store task description for context
     chrome.storage.local.set({ currentTask: request.task });
 }
 
@@ -142,7 +141,6 @@ function handleTaskUpdate(request) {
 function handleContextBatchUpdate(request, tabId) {
     console.log(`Service Worker: 📦 Received ${request.contexts.length} contexts`);
     
-    // Update platform info
     if (request.platform && request.platform !== 'unknown') {
         monitoringState.platform = request.platform;
     }
@@ -152,7 +150,6 @@ function handleContextBatchUpdate(request, tabId) {
         console.log(`Service Worker: 🏷️ Platform: ${request.platformInfo.name}`);
     }
     
-    // Add contexts to buffer
     request.contexts.forEach(ctx => {
         ctx.tabId = tabId;
         ctx.sessionId = monitoringState.sessionId;
@@ -162,12 +159,11 @@ function handleContextBatchUpdate(request, tabId) {
     
     console.log(`Service Worker: ✅ Total contexts: ${monitoringState.contextCount}`);
     
-    // Send to backend (optional)
     sendContextsToBackend(request.contexts);
 }
 
 // ========================================
-// AI PLATFORM IDENTIFICATION
+// AI PLATFORM IDENTIFICATION (ROBUST)
 // ========================================
 async function handlePlatformIdentification(request, sendResponse) {
     console.log('Service Worker: 🤖 Identifying platform with AI...');
@@ -175,20 +171,51 @@ async function handlePlatformIdentification(request, sendResponse) {
     try {
         const aiResponse = await callGeminiAPI(request.prompt);
         
-        // Parse JSON from AI response
         let identity;
+        
+        // ROBUST PARSING: Try multiple methods
         try {
+            // Method 1: Direct JSON parse
             identity = JSON.parse(aiResponse);
-        } catch (e) {
-            // Try to extract JSON from markdown code blocks
-            const jsonMatch = aiResponse.match(/``````/) || 
-                             aiResponse.match(/``````/);
+            console.log('Service Worker: ✅ Direct JSON parse successful');
+        } catch (directParseError) {
+            console.log('Service Worker: Direct parse failed, trying extraction...');
+            
+            // Method 2: Extract from markdown code blocks
+            const jsonMatch = aiResponse.match(/``````/);
+            
             if (jsonMatch) {
-                identity = JSON.parse(jsonMatch[1]);
+                try {
+                    identity = JSON.parse(jsonMatch[1].trim());
+                    console.log('Service Worker: ✅ Extracted from code block');
+                } catch (e) {
+                    throw new Error('Failed to parse extracted JSON');
+                }
             } else {
-                throw new Error('Failed to parse AI response');
+                // Method 3: Find JSON object in response
+                const objectMatch = aiResponse.match(/\{[\s\S]*\}/);
+                if (objectMatch) {
+                    try {
+                        identity = JSON.parse(objectMatch[0]);
+                        console.log('Service Worker: ✅ Extracted JSON object');
+                    } catch (e) {
+                        throw new Error('Failed to parse JSON object');
+                    }
+                } else {
+                    throw new Error('No JSON found in response');
+                }
             }
         }
+        
+        // Validate and ensure required fields
+        if (!identity || typeof identity !== 'object') {
+            throw new Error('Invalid identity object');
+        }
+        
+        identity.name = identity.name || 'Unknown Platform';
+        identity.type = identity.type || 'Web Platform';
+        identity.description = identity.description || 'Platform details unavailable';
+        identity.confidence = identity.confidence || 0.5;
         
         console.log('Service Worker: ✅ Platform identified:', identity.name);
         
@@ -196,17 +223,29 @@ async function handlePlatformIdentification(request, sendResponse) {
             success: true,
             identity: JSON.stringify(identity)
         });
+        
     } catch (error) {
         console.error('Service Worker: ❌ Platform identification error:', error);
+        
+        // FALLBACK: Return default identity instead of error
+        const fallbackIdentity = {
+            name: 'Platform',
+            type: 'Web',
+            description: 'AI identification unavailable',
+            confidence: 0.3
+        };
+        
+        console.log('Service Worker: Using fallback identity');
+        
         sendResponse({
-            success: false,
-            error: error.message
+            success: true,
+            identity: JSON.stringify(fallbackIdentity)
         });
     }
 }
 
 // ========================================
-// CHAT MESSAGE HANDLER (WITH PLATFORM CONTEXT)
+// CHAT MESSAGE HANDLER
 // ========================================
 async function handleChatMessage(request, sendResponse) {
     console.log("Service Worker: 💬 Processing chat message");
@@ -222,11 +261,9 @@ async function handleChatMessage(request, sendResponse) {
             return;
         }
 
-        // Build context from monitoring data
         const recentContexts = monitoringState.activityBuffer.slice(-10);
         let contextInfo = "";
         
-        // Add platform context
         if (monitoringState.platformIdentity) {
             contextInfo += `\n\nUser is currently working on: ${monitoringState.platformIdentity.name}`;
             contextInfo += `\nPlatform Type: ${monitoringState.platformIdentity.type}`;
@@ -235,7 +272,6 @@ async function handleChatMessage(request, sendResponse) {
             }
         }
         
-        // Add recent activity context
         if (recentContexts.length > 0) {
             const pageContexts = recentContexts.filter(c => c.type === 'page_context');
             const selections = recentContexts.filter(c => c.type === 'selection');
@@ -257,7 +293,6 @@ async function handleChatMessage(request, sendResponse) {
             }
         }
 
-        // Add current task if available
         const storage = await chrome.storage.local.get(['currentTask']);
         if (storage.currentTask) {
             contextInfo += `\n\nUser's current task: ${storage.currentTask}`;
@@ -270,7 +305,6 @@ User Question: ${userMessage}
 
 Provide a helpful, concise answer based on the context above.`;
 
-        // Call Gemini API
         const aiResponse = await callGeminiAPI(fullPrompt);
         
         sendResponse({
@@ -352,13 +386,10 @@ async function sendContextsToBackend(contexts) {
         });
         
         if (response.ok) {
-            const data = await response.json();
             console.log('Service Worker: ✅ Contexts sent to backend');
-        } else {
-            console.warn('Service Worker: ⚠️ Backend error:', response.status);
         }
     } catch (error) {
-        console.warn('Service Worker: ⚠️ Backend unavailable (offline mode)');
+        // Backend optional - silent fail
     }
 }
 

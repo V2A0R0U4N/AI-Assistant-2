@@ -1,5 +1,5 @@
 /* Context Monitor - Privacy-First with Enhanced Detection */
-(function() {
+(function () {
     'use strict';
 
     if (window.ContextMonitorInitialized) return;
@@ -9,23 +9,23 @@
         constructor() {
             this.isMonitoring = false;
             this.isInitialized = false;
-            
+
             this.platformAnalysis = null;
             this.platform = 'unknown';
             this.platformIdentity = null;
-            
+
             this.eventBuffer = [];
             this.bufferTimeout = null;
             this.BUFFER_DELAY = 2000;
             this.MAX_BUFFER_SIZE = 50;
-            
+
             this.lastContext = { url: '', title: '', selectedText: '', timestamp: null };
             this.selectionDebounce = null;
             this.lastSelection = '';
-            
+
             this.selectionObserver = null;
             this.lastFocusedElement = null;
-            
+
             console.log('[ContextMonitor] ✅ Initialized (passive mode - no detection yet)');
         }
 
@@ -36,15 +36,15 @@
             }
 
             console.log('[ContextMonitor] 🔍 Initializing platform detection (user started monitoring)');
-            
+
             this.platformAnalysis = this.analyzePlatform();
             this.platform = this.platformAnalysis.type;
-            
+
             if (this.isCodingPlatform()) {
                 console.log('[ContextMonitor] 🤖 Coding platform detected, identifying with AI...');
                 await this.identifyPlatformWithAI();
             }
-            
+
             this.isInitialized = true;
             console.log('[ContextMonitor] ✅ Initialization complete');
         }
@@ -54,7 +54,7 @@
                 url: window.location.href,
                 hostname: window.location.hostname,
                 title: document.title,
-                
+
                 scores: {
                     codeEditor: 0,
                     codeBlocks: 0,
@@ -65,7 +65,7 @@
                     documentation: 0,
                     learning: 0
                 },
-                
+
                 features: [],
                 type: 'web',
                 confidence: 0,
@@ -80,9 +80,9 @@
             this.detectExecution(analysis);
             this.detectDocumentation(analysis);
             this.detectLearningPlatform(analysis);
-            
+
             this.classifyPlatform(analysis);
-            
+
             return analysis;
         }
 
@@ -131,7 +131,7 @@
 
         detectSyntaxHighlighting(analysis) {
             const highlightClasses = ['hljs', 'highlight', 'prism', 'token', 'syntax', 'cm-', 'ace_'];
-            
+
             for (const className of highlightClasses) {
                 if (document.querySelector(`[class*="${className}"]`)) {
                     analysis.scores.syntaxHighlight += 8;
@@ -149,11 +149,11 @@
 
         detectTerminal(analysis) {
             const terminalSelectors = [
-                '.terminal', '.console', '.xterm', 
+                '.terminal', '.console', '.xterm',
                 '[class*="terminal"]', '[class*="console"]',
                 '[class*="shell"]', '.output'
             ];
-            
+
             for (const selector of terminalSelectors) {
                 if (document.querySelector(selector)) {
                     analysis.scores.terminal += 10;
@@ -169,7 +169,7 @@
                 '[class*="project-tree"]', '.explorer',
                 '[class*="workspace"]', '[class*="sidebar"]'
             ];
-            
+
             for (const selector of fileSystemSelectors) {
                 if (document.querySelector(selector)) {
                     analysis.scores.fileSystem += 10;
@@ -188,7 +188,7 @@
         detectExecution(analysis) {
             const executionKeywords = ['run', 'execute', 'compile', 'submit', 'test', 'debug', 'build'];
             const buttons = document.querySelectorAll('button, [role="button"], input[type="button"]');
-            
+
             buttons.forEach(btn => {
                 const btnText = (btn.textContent || btn.value || '').toLowerCase();
                 for (const keyword of executionKeywords) {
@@ -207,8 +207,8 @@
                 'guide', 'example', 'usage', 'syntax'
             ];
 
-            const pageText = (document.title + ' ' + 
-                             (document.querySelector('meta[name="description"]')?.content || '')).toLowerCase();
+            const pageText = (document.title + ' ' +
+                (document.querySelector('meta[name="description"]')?.content || '')).toLowerCase();
 
             for (const keyword of docKeywords) {
                 if (pageText.includes(keyword)) {
@@ -303,7 +303,7 @@
         async identifyPlatformWithAI() {
             const cacheKey = `platform_identity_${this.platformAnalysis.hostname}`;
             const cached = await this.getFromCache(cacheKey);
-            
+
             if (cached) {
                 this.platformIdentity = cached;
                 return cached;
@@ -357,7 +357,7 @@ Respond with JSON only:
         getFallbackIdentity() {
             const hostname = this.platformAnalysis.hostname;
             const name = hostname.replace(/^www\./, '').replace(/\.(com|io|ai|dev)$/, '').split('.')[0];
-            
+
             return {
                 name: name.charAt(0).toUpperCase() + name.slice(1),
                 type: this.platformAnalysis.type,
@@ -395,17 +395,17 @@ Respond with JSON only:
 
         async start() {
             if (this.isMonitoring) return;
-            
+
             console.log('[ContextMonitor] 🚀 Starting monitoring (user initiated)');
-            
+
             await this.initialize();
-            
+
             this.isMonitoring = true;
             this.setupSelectionObserver();
-            
+
             setTimeout(() => this.capturePageContext(), 500);
             this.setupListeners();
-            
+
             this.contextInterval = setInterval(() => {
                 if (this.isMonitoring) this.capturePageContext();
             }, 30000);
@@ -415,16 +415,16 @@ Respond with JSON only:
 
         stop() {
             if (!this.isMonitoring) return;
-            
+
             console.log('[ContextMonitor] ⏹️ Stopping monitoring');
             this.isMonitoring = false;
-            
+
             this.removeListeners();
             this.stopSelectionObserver();
-            
+
             if (this.contextInterval) clearInterval(this.contextInterval);
             this.flushBuffer(true);
-            
+
             console.log('[ContextMonitor] ✅ Stopped');
         }
 
@@ -432,7 +432,7 @@ Respond with JSON only:
             this.selectionHandler = () => this.handleTextSelection();
             document.addEventListener('mouseup', this.selectionHandler);
             document.addEventListener('keyup', this.selectionHandler);
-            
+
             this.urlCheckInterval = setInterval(() => {
                 if (!this.isMonitoring) return;
                 if (window.location.href !== this.lastContext.url) {
@@ -451,18 +451,18 @@ Respond with JSON only:
 
         handleTextSelection() {
             if (!this.isMonitoring) return;
-            
+
             clearTimeout(this.selectionDebounce);
             this.selectionDebounce = setTimeout(() => {
                 const selection = window.getSelection();
                 const selectedText = selection.toString().trim();
-                
+
                 if (selectedText && selectedText.length > 5 && selectedText !== this.lastSelection) {
                     this.lastSelection = selectedText;
-                    
+
                     const range = selection.getRangeAt(0);
                     const containerElement = range.commonAncestorContainer.parentElement;
-                    
+
                     const context = {
                         type: 'selection',
                         selectedText: selectedText.substring(0, 500),
@@ -472,7 +472,7 @@ Respond with JSON only:
                         platformInfo: this.getPlatformInfo(),
                         domain: window.location.hostname,
                         timestamp: Date.now(),
-                        
+
                         selectionContext: {
                             containerTag: containerElement?.tagName,
                             containerClass: containerElement?.className,
@@ -480,14 +480,14 @@ Respond with JSON only:
                             isCodeBlock: this.isSelectionInCode(containerElement)
                         }
                     };
-                    
+
                     window.postMessage({
                         type: 'CODEFLOW_TEXT_SELECTED',
                         text: selectedText,
                         platform: this.getPlatformInfo(),
                         context: context.selectionContext
                     }, '*');
-                    
+
                     this.addToBuffer(context);
                     console.log('[ContextMonitor] ✅ Selection captured');
                 }
@@ -499,34 +499,34 @@ Respond with JSON only:
                 Math.max(0, range.startOffset - 100),
                 range.startOffset
             ) || '';
-            
+
             const after = range.endContainer.textContent?.substring(
                 range.endOffset,
                 range.endOffset + 100
             ) || '';
-            
+
             return { before, after };
         }
 
         isSelectionInCode(element) {
             if (!element) return false;
-            
+
             const codeElements = ['PRE', 'CODE'];
             if (codeElements.includes(element.tagName)) return true;
-            
+
             let parent = element.parentElement;
             for (let i = 0; i < 5 && parent; i++) {
                 if (codeElements.includes(parent.tagName)) return true;
                 if (parent.className?.includes('code') || parent.className?.includes('editor')) return true;
                 parent = parent.parentElement;
             }
-            
+
             return false;
         }
 
         capturePageContext() {
             if (!this.isMonitoring) return;
-            
+
             const context = {
                 type: 'page_context',
                 url: window.location.href,
@@ -536,7 +536,7 @@ Respond with JSON only:
                 domain: window.location.hostname,
                 timestamp: Date.now()
             };
-            
+
             this.lastContext.url = context.url;
             this.addToBuffer(context);
         }
@@ -591,21 +591,21 @@ Respond with JSON only:
 
         addToBuffer(contextData) {
             this.eventBuffer.push(contextData);
-            
+
             if (this.eventBuffer.length >= this.MAX_BUFFER_SIZE) {
                 this.flushBuffer();
                 return;
             }
-            
+
             clearTimeout(this.bufferTimeout);
             this.bufferTimeout = setTimeout(() => this.flushBuffer(), this.BUFFER_DELAY);
         }
 
         flushBuffer(force = false) {
             if (this.eventBuffer.length === 0) return;
-            
+
             const eventsToSend = [...this.eventBuffer];
-            
+
             chrome.runtime.sendMessage({
                 action: 'contextBatchUpdate',
                 contexts: eventsToSend,
@@ -616,29 +616,53 @@ Respond with JSON only:
                     console.warn('[ContextMonitor] Send failed');
                 }
             });
-            
+
             this.eventBuffer = [];
             clearTimeout(this.bufferTimeout);
         }
 
         async getFromCache(key) {
+            if (!chrome?.storage?.local) {
+                return null;
+            }
+
             return new Promise((resolve) => {
-                chrome.storage.local.get([key], (result) => {
-                    const cached = result[key];
-                    if (cached && cached.expiry > Date.now()) {
-                        resolve(cached.data);
-                    } else {
-                        resolve(null);
-                    }
-                });
+                try {
+                    chrome.storage.local.get([key], (result) => {
+                        if (chrome.runtime.lastError) {
+                            resolve(null);
+                            return;
+                        }
+
+                        const cached = result[key];
+                        if (cached?.expiry > Date.now()) {
+                            resolve(cached.data);
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                } catch (error) {
+                    resolve(null);
+                }
             });
         }
 
         async saveToCache(key, data, ttl) {
-            chrome.storage.local.set({
-                [key]: { data, expiry: Date.now() + ttl }
-            });
+            if (!chrome?.storage?.local) return;
+
+            try {
+                chrome.storage.local.set({
+                    [key]: { data, expiry: Date.now() + ttl }
+                }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.warn('[Cache] Save failed');
+                    }
+                });
+            } catch (error) {
+                // Silent fail
+            }
         }
+
 
         getStatus() {
             return {
