@@ -6,7 +6,7 @@ console.log("CodeFlow AI: Service Worker Started");
 // GEMINI API CONFIGURATION
 // ========================================
 const GEMINI_API_KEY = "AIzaSyCZK64M10nVeeePewb0zOV04RhJesubWKk";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
 
 // ========================================
 // MONITORING STATE

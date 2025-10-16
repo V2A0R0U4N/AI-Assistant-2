@@ -1,65 +1,38 @@
 {
     "manifest_version": 3,
-    "name": "CodeFlow AI Pro - Real-Time Assistant",
+    "name": "CodeFlow AI Pro",
     "version": "2.0.0",
-    "description": "AI-powered coding assistant with real-time context monitoring for developers",
+    "description": "AI-powered coding assistant with real-time context monitoring",
+    
     "permissions": [
         "activeTab",
         "storage",
         "scripting",
         "tabs"
     ],
+    
     "host_permissions": [
-        "https://replit.com/*",
-        "https://leetcode.com/*",
-        "https://colab.research.google.com/*",
-        "https://github.com/*",
-        "https://codepen.io/*",
-        "https://stackblitz.com/*",
-        "https://generativelanguage.googleapis.com/*",
-        "http://localhost:5000/*",
         "<all_urls>"
     ],
+    
     "background": {
         "service_worker": "background/service-worker.js"
     },
+    
     "content_scripts": [
         {
-            "matches": [
-                "https://replit.com/*",
-                "https://leetcode.com/*",
-                "https://colab.research.google.com/*",
-                "https://github.com/*",
-                "https://codepen.io/*",
-                "https://stackblitz.com/*",
-                "<all_urls>"
-            ],
+            "matches": ["<all_urls>"],
             "js": [
-                "utils/api.js",
                 "content/context-monitor.js",
-                "content/summarizer.js",
-                "content/overlay-ui.js",
                 "content/sidebar-ui.js",
                 "content/content-script.js"
             ],
-            "css": [
-                "assets/styles/glassmorphism.css"
-            ],
-            "run_at": "document_idle"
+            "run_at": "document_idle",
+            "all_frames": false
         }
     ],
+    
     "action": {
-        "default_popup": "popup/popup.html"
-    },
-    "web_accessible_resources": [
-        {
-            "resources": [
-                "assets/styles/*",
-                "icons/*"
-            ],
-            "matches": [
-                "<all_urls>"
-            ]
-        }
-    ]
+        "default_title": "CodeFlow AI Pro"
+    }
 }
