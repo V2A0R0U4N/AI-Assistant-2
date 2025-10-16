@@ -346,6 +346,12 @@ Respond with JSON only:
                         const identity = JSON.parse(response.identity);
                         this.platformIdentity = identity;
                         this.saveToCache(cacheKey, identity, 7 * 24 * 60 * 60 * 1000);
+                        
+                        // Update display after AI identification
+                        if (this.isMonitoring) {
+                            this.updateSidebarDisplay();
+                        }
+                        
                         resolve(identity);
                     } catch (e) {
                         resolve(this.getFallbackIdentity());
@@ -406,8 +412,17 @@ Respond with JSON only:
             setTimeout(() => this.capturePageContext(), 500);
             this.setupListeners();
 
+            // Show platform display on top left
+            setTimeout(() => {
+                this.updateSidebarDisplay();
+                console.log('[ContextMonitor] 🎯 Platform display should now be visible');
+            }, 1000);
+
             this.contextInterval = setInterval(() => {
-                if (this.isMonitoring) this.capturePageContext();
+                if (this.isMonitoring) {
+                    this.capturePageContext();
+                    this.updateSidebarDisplay(); // Update periodically
+                }
             }, 30000);
 
             console.log('[ContextMonitor] ✅ Monitoring active');
@@ -424,6 +439,13 @@ Respond with JSON only:
 
             if (this.contextInterval) clearInterval(this.contextInterval);
             this.flushBuffer(true);
+
+            // Clean up platform display
+            const displayElement = document.getElementById('codeflow-platform-display');
+            if (displayElement) {
+                displayElement.remove();
+                console.log('[ContextMonitor] 🗑️ Platform display removed');
+            }
 
             console.log('[ContextMonitor] ✅ Stopped');
         }
@@ -589,6 +611,57 @@ Respond with JSON only:
             return icons[type] || '💻';
         }
 
+        updateSidebarDisplay() {
+            console.log('[ContextMonitor] 🎯 updateSidebarDisplay called');
+            
+            let displayElement = document.getElementById('codeflow-platform-display');
+
+            if (!displayElement) {
+                console.log('[ContextMonitor] 🆕 Creating new platform display element');
+                displayElement = document.createElement('div');
+                displayElement.id = 'codeflow-platform-display';
+                displayElement.style.cssText = `
+                    position: fixed;
+                    top: 15px;
+                    left: 15px;
+                    background: rgba(26, 27, 38, 0.95);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    color: #ffffff;
+                    padding: 12px 18px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(100, 150, 255, 0.4);
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                    z-index: 999999;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-size: 14px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    max-width: 350px;
+                `;
+                document.body.appendChild(displayElement);
+                console.log('[ContextMonitor] ✅ Platform display element added to DOM');
+            }
+
+            const platformInfo = this.getPlatformInfo();
+            console.log('[ContextMonitor] 📊 Platform info:', platformInfo);
+            
+            if (platformInfo) {
+                displayElement.innerHTML = `
+                    <span style="font-size: 18px;">${platformInfo.icon || '💻'}</span>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Currently Working On</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #ffffff;">
+                            ${platformInfo.name || 'Unknown Platform'}
+                        </div>
+                    </div>
+                `;
+                console.log('[ContextMonitor] ✅ Platform display updated with:', platformInfo.name);
+            }
+        }
+
         addToBuffer(contextData) {
             this.eventBuffer.push(contextData);
 
@@ -662,7 +735,6 @@ Respond with JSON only:
                 // Silent fail
             }
         }
-
 
         getStatus() {
             return {
