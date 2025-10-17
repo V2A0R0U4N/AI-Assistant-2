@@ -45,7 +45,7 @@
     // HEADER BAR - DYNAMIC (Hidden until monitoring starts)
     const topBar = document.createElement("div");
     topBar.id = "topBar";
-    topBar.style.cssText = `
+   topBar.style.cssText = `
   height: 0px;
   overflow: hidden;
   opacity: 0;
@@ -53,19 +53,33 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 32px;
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(60px);
-  -webkit-backdrop-filter: blur(60px);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+  
+  /* iOS 26 Glassmorphism for Top Bar */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%) brightness(1.05);
+  -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.05);
+  
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  
   pointer-events: auto;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
+
     topBar.innerHTML = `
   <div style="flex: 1; opacity: 0;" id="topBarContent">
-    <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px;">Currently Working On</div>
-    <div id="projectName" style="font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.95); margin-top: 4px;">Platform Detection...</div>
+    <div style="font-size: 11px; font-weight: 600;color: rgba(255,255,255,1); text-transform: uppercase; letter-spacing: 0.8px;">Currently Working On</div>
+    <div id="projectName" style="font-size: 15px; font-weight: 600; color: rgba(255,255,255,1);margin-top: 4px;">Platform Detection...</div>
   </div>
   
   <div style="display: flex; align-items: center; gap: 16px;">
@@ -75,9 +89,8 @@
       align-items: center;
       gap: 14px;
       padding: 12px 24px;
-      background: linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(118,75,162,0.2) 100%);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
+background: transparent;
+   
       border: 2px solid rgba(102,126,234,0.35);
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(102,126,234,0.25);
@@ -95,7 +108,7 @@
         <div id="platformNameDisplay" style="
           font-size: 16px;
           font-weight: 700;
-          color: rgba(255,255,255,0.98);
+       color: rgba(255,255,255,1);
           letter-spacing: 0.4px;
           text-shadow: 0 2px 8px rgba(0,0,0,0.3);
         ">
@@ -103,7 +116,7 @@
         </div>
         <div id="platformTypeDisplay" style="
           font-size: 11px;
-          color: rgba(255,255,255,0.65);
+          color: rgba(255,255,255,1)
           margin-top: 2px;
           font-weight: 500;
         ">
@@ -117,11 +130,10 @@
       width: 42px;
       height: 42px;
       border-radius: 12px;
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+    background: transparent;
+    
       border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.9);
+      color: rgba(255,255,255,1);
       font-size: 24px;
       cursor: pointer;
       transition: all 0.2s;
@@ -136,40 +148,60 @@
     this.container.appendChild(topBar);
 
     // CHAT BOX - ULTRA TRANSPARENT, NO OVERLAP
-const chatContainer = document.createElement("div");
-chatContainer.id = "chatContainer";
-chatContainer.style.cssText = `
+    const chatContainer = document.createElement("div");
+    chatContainer.id = "chatContainer";
+   chatContainer.style.cssText = `
   position: fixed;
   top: 90px;
   right: 32px;
   width: 440px;
   height: calc(100vh - 120px);
-  background: rgba(15, 15, 25, 0.25);
-  backdrop-filter: blur(120px) saturate(250%);
-  -webkit-backdrop-filter: blur(120px) saturate(250%);
-  border-radius: 24px;
+  
+  /* iOS 26 Premium Glassmorphism */
+  background: linear-gradient(
+    135deg,Line 163:     rgba(255, 255, 255, 0.85) 0%,
+Line 164:     rgba(255, 255, 255, 0.75) 50%,
+Line 165:     rgba(255, 255, 255, 0.80) 100%
+
+  );
+  backdrop-filter: blur(60px) saturate(200%) brightness(1.08);
+  -webkit-backdrop-filter: blur(60px) saturate(200%) brightness(1.08);
+  
+  /* Layered Glass Borders */
+Line 171:   border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 30px;
+  
+  /* Depth & Glow */
   box-shadow: 
-    0 8px 32px rgba(0,0,0,0.3),
-    0 0 0 1px rgba(255,255,255,0.04),
-    inset 0 1px 0 0 rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.06);
+  0 30px 90px rgba(0, 0, 0, 0.10),
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+     inset 0 -1px 1px 0 rgba(0, 0, 0, 0.05),
+    0 0 60px rgba(102, 126, 234, 0.15);
+  
+  /* Floating Effect */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  
   display: flex;
   flex-direction: column;
   overflow: hidden;
   pointer-events: auto;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Smooth Premium Motion */
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 `;
 
-
+ 
 
     chatContainer.innerHTML = `
   <!-- Header - ULTRA TRANSPARENT -->
   <div style="
     padding: 24px;
-    background: rgba(255,255,255,0.01);
-    backdrop-filter: blur(60px) saturate(200%);
-    -webkit-backdrop-filter: blur(50px) saturate(200%);
-    color: rgba(255,255,255,0.98);
+   background: transparent;
+ 
+   Line 203:    color: #1f2937;
+
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -180,17 +212,18 @@ chatContainer.style.cssText = `
       <span style="text-shadow: 0 2px 8px rgba(0,0,0,0.5);">AI Assistant</span>
     </div>
   </div>
+  
+  
 
   <!-- Monitoring Control Panel - ULTRA TRANSPARENT -->
   <div id="monitoringPanel" style="
     padding: 20px 24px;
-    background: rgba(255,255,255,0.01);
-    backdrop-filter: blur(60px) saturate(200%);
-    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    background: transparent;
+
     border-bottom: 1px solid rgba(255,255,255,0.02);
   ">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <span style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.95); text-shadow: 0 1px 4px rgba(0,0,0,0.3);">Real-Time Monitoring</span>
+      <span style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,1); text-shadow: 0 1px 4px rgba(0,0,0,0.3);">Real-Time Monitoring</span>
       <button id="toggleMonitoring" style="
         padding: 6px 16px;
         background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%);
@@ -206,14 +239,16 @@ chatContainer.style.cssText = `
         Start
       </button>
     </div>
-    <div id="monitoringStatus" style="font-size: 11px; color: rgba(255,255,255,0.85); display: none;">
+    <div id="monitoringStatus" style="font-size: 11px; color: color: rgba(255,255,255,1);display: none;">
       <div style="margin-bottom: 4px;">
         <span style="display: inline-block; width: 8px; height: 8px; background: #4ade80; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 8px #4ade80;"></span>
         <span id="statusText">Monitoring active</span>
       </div>
-      <div style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.04); border-radius: 6px; font-size: 10px; border: 1px solid rgba(255,255,255,0.06);">
-        <div style="color: rgba(255,255,255,0.9);">📊 Contexts: <span id="contextCount">0</span></div>
-        <div style="color: rgba(255,255,255,0.9);">🎯 Platform: <span id="platformName">Unknown</span></div>
+      <div style="margin-top: 8px; padding: 8px;background: transparent; border-radius: 6px;
+ // Fully transparent
+ border-radius: 6px; font-size: 10px; border: 1px solid rgba(255,255,255,1);">
+        <div style="color: color: rgba(255,255,255,1);">📊 Contexts: <span id="contextCount">0</span></div>
+        <div style="color: rgba(255,255,255,1);">🎯 Platform: <span id="platformName">Unknown</span></div>
       </div>
     </div>
   </div>
@@ -234,12 +269,12 @@ chatContainer.style.cssText = `
         font-size: 20px;
         font-weight: 600;
         margin: 8px 0;
-        color: rgba(255,255,255,0.98);
+       color: rgba(255,255,255,1);
         text-shadow: 0 2px 12px rgba(0,0,0,0.5);
       ">Welcome to CodeFlow AI</h3>
       <p style="
         font-size: 14px;
-        color: rgba(255,255,255,0.8);
+        color: rgba(255,255,255,1);
         margin-bottom: 24px;
         text-shadow: 0 1px 6px rgba(0,0,0,0.4);
       ">Start monitoring to enable context-aware assistance</p>
@@ -264,9 +299,8 @@ chatContainer.style.cssText = `
   <!-- Input Area - ULTRA TRANSPARENT -->
   <div style="
     padding: 20px 24px;
-    background: rgba(255,255,255,0.01);
-    backdrop-filter: blur(60px) saturate(200%);
-    -webkit-backdrop-filter: blur(60px) saturate(200%);
+  background: transparent;
+ 
     border-top: 1px solid rgba(255,255,255,0.02);
   ">
     <div id="filePreview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; min-height: 0; transition: all 0.3s;"></div>
@@ -277,14 +311,13 @@ chatContainer.style.cssText = `
           style="
             width: 100%;
             background: rgba(255,255,255,0.06);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+        
             border: 2px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             padding: 12px 16px;
             font-size: 14px;
             font-family: inherit;
-            color: rgba(255,255,255,0.95);
+          
             resize: none;
             max-height: 120px;
             transition: all 0.2s;
@@ -295,8 +328,7 @@ chatContainer.style.cssText = `
         width: 44px;
         height: 44px;
         background: rgba(255,255,255,0.06);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+    
         border: 1px solid rgba(255,255,255,0.1);
         border-radius: 12px;
         display: flex;
@@ -321,7 +353,7 @@ chatContainer.style.cssText = `
     </div>
     <div style="
       font-size: 11px;
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,1);
       text-align: center;
       margin-top: 8px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.3);
@@ -330,123 +362,327 @@ chatContainer.style.cssText = `
 `;
 
 
-    this.container.appendChild(chatContainer);
+// ✅ NOW add the specular highlight AFTER the HTML
+const specularHighlight = document.createElement('div');
+specularHighlight.id = 'specularHighlight';
+specularHighlight.style.cssText = `
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.1) 30%,
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.1s ease;
+  border-radius: 30px;
+  mix-blend-mode: overlay;
+  z-index: 1;
+`;
+chatContainer.appendChild(specularHighlight);
+
+// Then continue with the rest
+this.container.appendChild(chatContainer);
+
+    // PERMANENT CLOSE BUTTON - Always visible
+    const permanentCloseBtn = document.createElement("button");
+    permanentCloseBtn.id = "permanentCloseBtn";
+    permanentCloseBtn.innerHTML = "×";
+permanentCloseBtn.style.cssText = `
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  
+  /* Premium Glass Effect */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.15) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%) brightness(1.2);
+  -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.2);
+  
+  /* Glowing Edge */
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 2px 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.15),
+    0 0 30px rgba(255, 255, 255, 0.2);
+  
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 200;
+  cursor: pointer;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  z-index: 2147483648;
+  pointer-events: auto;
+  
+  /* Smooth Transform */
+  transform: translateZ(0) scale(1);
+  will-change: transform, background, box-shadow;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+`;
+
+    this.container.appendChild(permanentCloseBtn);
+
     document.body.appendChild(this.container);
 
     this.addStyles();
     this.detectAndApplyTheme();
   };
 
-AssistantSidebar.prototype.addStyles = function () {
+  AssistantSidebar.prototype.addStyles = function () {
     if (document.getElementById("codeflow-styles")) return;
-    
+
     const style = document.createElement("style");
     style.id = "codeflow-styles";
     style.textContent = `
+      /* ===== iOS 26 PREMIUM GLASSMORPHISM ===== */
+      
       @keyframes pulse {
         0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.8; transform: scale(1.05); }
+        50% { opacity: 0.85; transform: scale(1.08); }
       }
       
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: translateY(15px) scale(0.96); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
       }
       
       @keyframes slideUp {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
       }
       
-      /* Quick Action Buttons - Glass Effect */
+      @keyframes glowPulse {
+        0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.4); }
+        50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-6px); }
+      }
+      
+      /* Container Floating Animation */
+      #chatContainer {
+        animation: float 8s ease-in-out infinite;
+      }
+      
+      /* Parallax Hover */
+      #chatContainer:hover {
+        transform: translateY(-4px) translateZ(0) !important;
+        box-shadow: 
+          0 40px 120px rgba(0, 0, 0, 0.3),
+          0 0 0 1px rgba(255, 255, 255, 0.2),
+          inset 0 1px 1px 0 rgba(255, 255, 255, 0.5),
+          0 0 80px rgba(102, 126, 234, 0.25) !important;
+      }
+      
+      /* Close Button Hover */
+      #permanentCloseBtn:hover {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(220, 38, 38, 0.3) 100%) !important;
+        backdrop-filter: blur(50px) saturate(200%) brightness(1.3) !important;
+        -webkit-backdrop-filter: blur(50px) saturate(200%) brightness(1.3) !important;
+        border-color: rgba(239, 68, 68, 0.7) !important;
+        transform: translateZ(0) scale(1.15) rotate(90deg) !important;
+        box-shadow: 
+          0 16px 50px rgba(239, 68, 68, 0.5),
+          0 0 0 2px rgba(239, 68, 68, 0.3),
+          inset 0 2px 2px 0 rgba(255, 255, 255, 0.6),
+          0 0 60px rgba(239, 68, 68, 0.6) !important;
+      }
+      
+      #permanentCloseBtn:active {
+        transform: translateZ(0) scale(0.95) rotate(90deg) !important;
+      }
+      
+      /* Quick Action Buttons */
       .quick-action-btn {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 18px;
-        background: rgba(255,255,255,0.06);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 2px solid rgba(255,255,255,0.1);
-        border-radius: 12px;
-        color: rgba(255,255,255,0.95);
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-align: left;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
       }
       
-      .quick-action-btn:hover {
-        background: rgba(255,255,255,0.12);
-        border-color: rgba(102,126,234,0.5);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+      .quick-action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 200%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        transition: left 0.6s;
       }
       
-      .quick-action-btn:active {
-        transform: translateY(0);
+      .quick-action-btn:hover::before {
+        left: 100%;
+      }
+            /* ============================================
+         ADVANCED: Dynamic Specular Highlights
+         ============================================ */
+      
+      #specularHighlight {
+        transition: opacity 0.3s ease, transform 0.1s ease-out;
       }
       
-      /* Scrollbar Styling - Transparent */
-      #chatMessages::-webkit-scrollbar {
-        width: 6px;
+      #chatContainer:hover #specularHighlight {
+        opacity: 1;
       }
       
-      #chatMessages::-webkit-scrollbar-track {
-        background: rgba(255,255,255,0.02);
-        border-radius: 3px;
+      /* Content-aware color adaptation */
+      @keyframes colorPulse {
+        0%, 100% {
+          filter: hue-rotate(0deg);
+        }
+        50% {
+          filter: hue-rotate(5deg);
+        }
       }
       
-      #chatMessages::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.15);
-        border-radius: 3px;
+      .color-adaptive {
+        animation: colorPulse 10s ease-in-out infinite;
       }
+      /* ============================================
+         INPUT TEXT COLOR FIX
+         ============================================ */
       
-      #chatMessages::-webkit-scrollbar-thumb:hover {
-        background: rgba(255,255,255,0.25);
-      }
-      
-      /* Text Input Focus Effect */
-      #chatInput:focus {
-        border-color: rgba(102,126,234,0.6);
-        background: rgba(255,255,255,0.1);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+      #chatInput {
+        color: #1f2937 !important;
       }
       
       #chatInput::placeholder {
-        color: rgba(255,255,255,0.4);
+        color: rgba(107, 114, 128, 0.6) !important;
       }
       
-      /* Button Hover Effects */
-      #closeDashboard:hover {
+      /* Input Focus Glow */
+      #chatInput:focus {
         background: rgba(255,255,255,0.12) !important;
-        transform: rotate(90deg) scale(1.1);
-      }
-      
-      label[for="fileInput"]:hover,
-      #sendBtn:hover {
-        transform: scale(1.05);
-      }
-      
-      label[for="fileInput"]:hover {
-        background: rgba(255,255,255,0.1) !important;
-      }
-      
-      #sendBtn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+        border-color: rgba(102,126,234,0.6) !important;
+        
+        outline: none;
+        
+        box-shadow: 
+          0 0 0 4px rgba(102,126,234,0.15),
+          0 8px 24px rgba(102,126,234,0.2),
+          inset 0 1px 0 rgba(255,255,255,0.2);
+        
+        transform: scale(1.01);
       }
 
-      #toggleMonitoring:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 16px rgba(102,126,234,0.6);
+      /* ============================================
+         INPUT TEXT COLOR FIX
+         ============================================ */
+      
+      #chatInput {
+        color: #1f2937 !important;
       }
+      
+      #chatInput::placeholder {
+        color: rgba(107, 114, 128, 0.6) !important;
+      }
+      
+      /* Input Focus Glow */
+      #chatInput:focus {
+        background: rgba(255,255,255,0.12) !important;
+        border-color: rgba(102,126,234,0.6) !important;
+        
+        outline: none;
+        
+        box-shadow: 
+          0 0 0 4px rgba(102,126,234,0.15),
+          0 8px 24px rgba(102,126,234,0.2),
+          inset 0 1px 0 rgba(255,255,255,0.2);
+        
+        transform: scale(1.01);
+      }
+
+
+      .quick-action-btn:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.25) 0%, rgba(118, 75, 162, 0.20) 100%);
+        border-color: rgba(102, 126, 234, 0.6);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 
+          0 12px 40px rgba(102, 126, 234, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3),
+          0 0 30px rgba(102, 126, 234, 0.3);
+      }
+      /* Input Text Color - Light Mode */
+#chatInput {
+  color: #1f2937 !important;
+}
+
+#chatInput::placeholder {
+  color: rgba(107, 114, 128, 0.6) !important;
+}
+
+/* Input Focus Glow */
+#chatInput:focus {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(102,126,234,0.6) !important;
+  outline: none;
+  box-shadow: 
+    0 0 0 4px rgba(102,126,234,0.15),
+    0 8px 24px rgba(102,126,234,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  transform: scale(1.01);
+}
+
+      /* Input Focus Glow */
+      #chatInput:focus {
+        background: rgba(255,255,255,0.12) !important;
+        border-color: rgba(102,126,234,0.6) !important;
+        outline: none;
+        box-shadow: 
+          0 0 0 4px rgba(102,126,234,0.15),
+          0 8px 24px rgba(102,126,234,0.2),
+          inset 0 1px 0 rgba(255,255,255,0.2);
+        transform: scale(1.01);
+      }
+      
+      /* Button Transforms */
+      #sendBtn:hover, label[for="fileInput"]:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 12px 32px rgba(102,126,234,0.5);
+      }
+      
+      #toggleMonitoring:hover {
+        transform: scale(1.08);
+        box-shadow: 0 8px 32px rgba(102,126,234,0.6);
+        animation: glowPulse 2s infinite;
+      }
+      
+      /* Smooth Rendering */
+      * {
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+            
+      /* ============================================
+         DARK MODE ADAPTATIONS
+         ============================================ */
+      
+ 
+        
     `;
+
     document.head.appendChild(style);
-};
+  };
 
 
   // Website theme detection - matches website's theme
@@ -522,59 +758,59 @@ AssistantSidebar.prototype.addStyles = function () {
     const isDark = theme === 'dark';
 
     const colors = isDark ? {
-      topBarBg: 'rgba(26, 27, 38, 0.95)',
+      topBarBg: 'transparent',
       topBarText: '#ffffff',
       topBarTextSecondary: '#a5b4fc',
       topBarBorder: 'rgba(255, 255, 255, 0.1)',
       topBarShadow: 'rgba(0,0,0,0.3)',
-      chatContainerBg: 'rgba(26, 27, 38, 0.95)',
+      chatContainerBg: 'transparent',
       chatContainerBorder: 'rgba(100, 100, 255, 0.3)',
-      headerBg: 'rgba(26, 27, 38, 0.95)',
+      headerBg: 'transparent',
       headerText: '#ffffff',
-      monitoringPanelBg: 'rgba(30, 35, 50, 0.9)',
+      monitoringPanelBg: 'transparent',
       monitoringPanelText: '#ffffff',
-      monitoringStatsBg: 'rgba(40, 42, 58, 0.9)',
+      monitoringStatsBg: 'transparent',
       monitoringStatsText: '#ffffff',
-      messagesBg: 'rgba(20, 22, 35, 0.6)',
+      messagesBg: 'transparent',
       welcomeTitle: '#ffffff',
-      welcomeText: 'rgba(255,255,255,0.8)',
-      inputAreaBg: 'rgba(30, 35, 50, 0.95)',
-      textareaBg: 'rgba(40, 42, 58, 0.9)',
+      welcomeText: 'rgba(255,255,255,1)',
+      inputAreaBg: 'transparent',
+      textareaBg: 'transparent',
       textareaText: '#ffffff',
       textareaBorder: 'rgba(100, 100, 255, 0.3)',
-      buttonBg: 'rgba(40, 42, 58, 0.9)',
+      buttonBg: 'transparent',
       buttonBorder: 'rgba(255,255,255,0.2)',
-      quickActionBg: 'rgba(40, 42, 58, 0.9)',
+      quickActionBg: 'transparent',
       quickActionText: '#ffffff',
       quickActionBorder: 'rgba(100, 100, 255, 0.3)',
       closeButtonBg: 'rgba(255,255,255,0.1)',
       closeButtonText: 'white',
-      closeButtonBorder: 'rgba(255,255,255,0.2)',
-      placeholderColor: 'rgba(255, 255, 255, 0.5)'
+      closeButtonBorder: 'rgba(255,255,255,1)',
+      placeholderColor: 'rgba(255, 255, 255, 1)'
     } : {
-      topBarBg: 'rgba(255, 255, 255, 0.85)',
+      topBarBg: 'transparent',
       topBarText: '#111827',
       topBarTextSecondary: '#6b7280',
       topBarBorder: 'rgba(0, 0, 0, 0.1)',
       topBarShadow: 'rgba(0,0,0,0.08)',
-      chatContainerBg: 'rgba(255, 255, 255, 0.90)',
+      chatContainerBg: 'transparent',
       chatContainerBorder: 'rgba(0, 0, 0, 0.08)',
-      headerBg: 'rgba(255, 255, 255, 0.95)',
+      headerBg: 'transparent',
       headerText: '#111827',
-      monitoringPanelBg: 'rgba(248, 250, 252, 0.95)',
+      monitoringPanelBg: 'transparent',
       monitoringPanelText: '#1f2937',
-      monitoringStatsBg: 'rgba(255, 255, 255, 0.8)',
+      monitoringStatsBg: 'transparent',
       monitoringStatsText: '#374151',
-      messagesBg: 'rgba(249, 250, 251, 0.8)',
+      messagesBg: 'transparent',
       welcomeTitle: '#111827',
       welcomeText: '#6b7280',
-      inputAreaBg: 'rgba(248, 250, 252, 0.95)',
-      textareaBg: 'rgba(255, 255, 255, 0.95)',
+      inputAreaBg: 'transparent',
+      textareaBg: 'transparent',
       textareaText: '#111827',
       textareaBorder: 'rgba(0,0,0,0.1)',
-      buttonBg: 'rgba(255, 255, 255, 0.95)',
+      buttonBg: 'transparent',
       buttonBorder: 'rgba(0,0,0,0.1)',
-      quickActionBg: 'rgba(255, 255, 255, 0.95)',
+      quickActionBg: 'transparent',
       quickActionText: '#374151',
       quickActionBorder: 'rgba(0, 0, 0, 0.08)',
       closeButtonBg: 'rgba(0,0,0,0.05)',
@@ -582,6 +818,10 @@ AssistantSidebar.prototype.addStyles = function () {
       closeButtonBorder: 'rgba(0,0,0,0.1)',
       placeholderColor: 'rgba(0, 0, 0, 0.4)'
     };
+    // Update permanent close button for light/dark theme
+
+    // Rest of the function continues...
+
 
     const topBar = this.container.querySelector('#codeflow-dashboard > div:first-child');
     if (topBar) {
@@ -629,6 +869,7 @@ AssistantSidebar.prototype.addStyles = function () {
           if (statsDiv) {
             statsDiv.style.background = colors.monitoringStatsBg;
             statsDiv.querySelectorAll('div').forEach(d => d.style.color = colors.monitoringStatsText);
+
           }
         }
       }
@@ -669,15 +910,148 @@ AssistantSidebar.prototype.addStyles = function () {
     }
 
     this.updateQuickActionTheme(isDark);
+    // Update permanent close button theme
+     const permCloseBtn = this.container.querySelector('#permanentCloseBtn');
+if (permCloseBtn) {
+  permCloseBtn.style.background = isDark 
+    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.20) 100%)' 
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)';
+  
+  permCloseBtn.style.backdropFilter = isDark
+    ? 'blur(45px) saturate(180%) brightness(1.25)'
+    : 'blur(40px) saturate(180%) brightness(1.2)';
+  
+  permCloseBtn.style.webkitBackdropFilter = isDark
+    ? 'blur(45px) saturate(180%) brightness(1.25)'
+    : 'blur(40px) saturate(180%) brightness(1.2)';
+  
+  permCloseBtn.style.border = isDark 
+    ? '1.5px solid rgba(255, 255, 255, 0.35)' 
+    : '1.5px solid rgba(255, 255, 255, 0.35)';
+  
+  permCloseBtn.style.boxShadow = isDark
+    ? `
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.25),
+      inset 0 2px 2px 0 rgba(255, 255, 255, 0.6),
+      0 0 40px rgba(255, 255, 255, 0.25)
+    `
+    : `
+      0 12px 40px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.2),
+      inset 0 2px 2px 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.15),
+      0 0 30px rgba(255, 255, 255, 0.2)
+    `;
+}
+
+  };
+
+    // ADVANCED: Content-Aware Color Adaptation
+  AssistantSidebar.prototype.startColorAdaptation = function() {
+    const self = this;
+    
+    function sampleBackgroundColor() {
+      const chatContainer = self.container.querySelector('#chatContainer');
+      if (!chatContainer) return null;
+      
+      const bodyBg = window.getComputedStyle(document.body).backgroundColor;
+      const rgb = bodyBg.match(/\d+/g);
+      
+      if (rgb && rgb.length >= 3) {
+        const r = parseInt(rgb[0]);
+        const g = parseInt(rgb[1]);
+        const b = parseInt(rgb[2]);
+        
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        
+        const max = Math.max(r, g, b);
+        let hue = 0;
+        
+        if (max === r) {
+          hue = ((g - b) / (max - Math.min(r, g, b))) * 60;
+        } else if (max === g) {
+          hue = (2 + (b - r) / (max - Math.min(r, g, b))) * 60;
+        } else {
+          hue = (4 + (r - g) / (max - Math.min(r, g, b))) * 60;
+        }
+        
+        if (hue < 0) hue += 360;
+        
+        return {
+          r, g, b,
+          brightness,
+          hue,
+          isDark: brightness < 128
+        };
+      }
+      
+      return null;
+    }
+    
+    function applyColorAdaptation() {
+      const colorData = sampleBackgroundColor();
+      if (!colorData) return;
+      
+      const chatContainer = self.container.querySelector('#chatContainer');
+      if (!chatContainer) return;
+      
+      let tintColor;
+      
+      if (colorData.isDark) {
+        const tintOpacity = 0.15;
+        tintColor = `rgba(${Math.min(255, colorData.r + 50)}, ${Math.min(255, colorData.g + 50)}, ${Math.min(255, colorData.b + 50)}, ${tintOpacity})`;
+      } else {
+        const tintOpacity = 0.10;
+        tintColor = `rgba(${Math.max(0, colorData.r - 30)}, ${Math.max(0, colorData.g - 30)}, ${Math.max(0, colorData.b - 30)}, ${tintOpacity})`;
+      }
+      
+      chatContainer.style.background = `
+        linear-gradient(
+          135deg,
+          ${tintColor} 0%,
+          rgba(255, 255, 255, ${colorData.isDark ? 0.08 : 0.12}) 50%,
+          ${tintColor} 100%
+        )
+      `;
+      
+      const hueRotation = (colorData.hue / 360) * 10;
+      chatContainer.style.filter = `hue-rotate(${hueRotation}deg)`;
+      
+      chatContainer.classList.add('color-adaptive');
+    }
+    
+    applyColorAdaptation();
+    
+    let adaptationTimeout;
+    window.addEventListener('scroll', () => {
+      clearTimeout(adaptationTimeout);
+      adaptationTimeout = setTimeout(applyColorAdaptation, 300);
+    });
+    
+    window.addEventListener('resize', () => {
+      clearTimeout(adaptationTimeout);
+      adaptationTimeout = setTimeout(applyColorAdaptation, 300);
+    });
+    
+    const observer = new MutationObserver(() => {
+      clearTimeout(adaptationTimeout);
+      adaptationTimeout = setTimeout(applyColorAdaptation, 500);
+    });
+    
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
   };
 
   AssistantSidebar.prototype.updateQuickActionTheme = function (isDark) {
     const colors = isDark ? {
-      bg: 'rgba(40, 42, 58, 0.9)',
+      bg: 'transparent',
       text: '#ffffff',
       border: 'rgba(100, 100, 255, 0.3)'
     } : {
-      bg: 'rgba(255, 255, 255, 0.95)',
+      bg: 'transparent',
       text: '#374151',
       border: 'rgba(0, 0, 0, 0.08)'
     };
@@ -689,18 +1063,20 @@ AssistantSidebar.prototype.addStyles = function () {
       btn.style.border = `2px solid ${colors.border}`;
     });
   };
+  //our existing setupEvents code here
 
-  AssistantSidebar.prototype.setupEvents = function () {
-    // Your existing setupEvents code here
-  };
-
-  // Continue with rest of your code...
-
-
-
+  // Continue with rest of your code..
 
   AssistantSidebar.prototype.setupEvents = function () {
     const self = this;
+    // Permanent close button
+    const permCloseBtn = this.container.querySelector("#permanentCloseBtn");
+    if (permCloseBtn) {
+      permCloseBtn.addEventListener("click", () => {
+        self.hide();
+      });
+    }
+
     const fileInput = this.container.querySelector("#fileInput");
 
     // File upload handling
@@ -751,6 +1127,34 @@ AssistantSidebar.prototype.addStyles = function () {
       } else {
         self.startMonitoring();
       }
+          // ADVANCED: Dynamic Specular Highlight Tracking
+    const chatContainer = this.container.querySelector('#chatContainer');
+    const specularHighlight = chatContainer.querySelector('#specularHighlight');
+    
+    if (chatContainer && specularHighlight) {
+      chatContainer.addEventListener('mousemove', (e) => {
+        const rect = chatContainer.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        // Update specular highlight position
+        specularHighlight.style.background = `
+          radial-gradient(
+            circle at ${x}% ${y}%,
+            rgba(255, 255, 255, 0.3) 0%,
+            rgba(255, 255, 255, 0.15) 20%,
+            rgba(255, 255, 255, 0.05) 40%,
+            transparent 60%
+          )
+        `;
+        specularHighlight.style.opacity = '1';
+      });
+      
+      chatContainer.addEventListener('mouseleave', () => {
+        specularHighlight.style.opacity = '0';
+      });
+    }
+
     });
   };
 
@@ -852,7 +1256,7 @@ padding-right: 30px;
   <div style="font-weight: 600; font-size: 12px; color: #a5b4fc;">
     Selected${isCodeBlock ? ' Code' : ' Text'} • Context Captured
   </div>
-  <div style="font-size: 10px; color: rgba(255,255,255,0.6);">
+  <div style="font-size: 10px; color: rgba(255,255,255,1);">
     from ${platformInfo?.hostname || 'page'} • ${totalLines} line${totalLines > 1 ? 's' : ''} • ${text.length} chars
   </div>
 </div>
@@ -888,7 +1292,7 @@ padding-right: 30px;
   background: rgba(0, 0, 0, 0.4);
   padding: 12px;
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 1);
   line-height: 1.6;
   max-height: ${isLongText ? '80px' : 'none'};
   overflow: hidden;
@@ -928,7 +1332,7 @@ padding-right: 30px;
     background: rgba(40, 42, 58, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 1);
     font-size: 11px;
     cursor: pointer;
     transition: all 0.2s;
@@ -992,7 +1396,7 @@ padding-right: 30px;
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 1);
 `;
 
     footer.innerHTML = `
@@ -1090,12 +1494,12 @@ padding-right: 30px;
     self.updatePlatformDisplay();
   };
 
-AssistantSidebar.prototype.stopMonitoring = function () {
+  AssistantSidebar.prototype.stopMonitoring = function () {
     const self = this;
-    
+
     const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
     const monitoringStatus = this.container.querySelector("#monitoringStatus");
-    
+
     console.log("[Sidebar] ⏹️ Stopping monitoring...");
 
     // Stop stats interval FIRST
@@ -1128,11 +1532,11 @@ AssistantSidebar.prototype.stopMonitoring = function () {
     // ========================================
     const topBar = self.container.querySelector('#topBar');
     const topBarContent = self.container.querySelector('#topBarContent');
-    
+
     if (topBarContent) {
       topBarContent.style.opacity = '0';
     }
-    
+
     setTimeout(() => {
       if (topBar) {
         topBar.style.height = '0px';
@@ -1144,7 +1548,7 @@ AssistantSidebar.prototype.stopMonitoring = function () {
     // ========================================
 
     console.log("[Sidebar] ✅ Monitoring stopped");
-};
+  };
 
 
   AssistantSidebar.prototype.updateMonitoringStats = function () {
@@ -1203,50 +1607,50 @@ AssistantSidebar.prototype.stopMonitoring = function () {
   };
 
   // NEW: Update platform display in header
-  AssistantSidebar.prototype.updatePlatformDisplay = function() {
+  AssistantSidebar.prototype.updatePlatformDisplay = function () {
     const self = this;
-    
+
     if (!self.contextMonitorInstance) return;
-    
+
     setTimeout(() => {
-        const platformInfo = self.contextMonitorInstance.getPlatformInfo();
-        
-        const platformDisplay = self.container.querySelector('#platformDisplay');
-        const platformNameDisplay = self.container.querySelector('#platformNameDisplay');
-        const platformTypeDisplay = self.container.querySelector('#platformTypeDisplay');
-        const projectName = self.container.querySelector('#projectName');
-        
-        if (platformDisplay && platformInfo) {
-            // Show platform badge
-            platformDisplay.style.display = 'flex';
-            
-            // Update name and type
-            if (platformNameDisplay) {
-                platformNameDisplay.textContent = `${platformInfo.icon || '💻'} ${platformInfo.name || 'Platform'}`;
-            }
-            
-            if (platformTypeDisplay) {
-                platformTypeDisplay.textContent = platformInfo.type || 'Web';
-            }
-            
-            // Update project name on left
-            if (projectName) {
-                projectName.textContent = `${platformInfo.name || 'Platform'}`;
-            }
-            
-            // Hover animation
-            platformDisplay.addEventListener('mouseenter', () => {
-                platformDisplay.style.transform = 'translateY(-2px) scale(1.02)';
-                platformDisplay.style.boxShadow = '0 8px 32px rgba(102,126,234,0.4)';
-            });
-            
-            platformDisplay.addEventListener('mouseleave', () => {
-                platformDisplay.style.transform = 'translateY(0) scale(1)';
-                platformDisplay.style.boxShadow = '0 4px 20px rgba(102,126,234,0.25)';
-            });
+      const platformInfo = self.contextMonitorInstance.getPlatformInfo();
+
+      const platformDisplay = self.container.querySelector('#platformDisplay');
+      const platformNameDisplay = self.container.querySelector('#platformNameDisplay');
+      const platformTypeDisplay = self.container.querySelector('#platformTypeDisplay');
+      const projectName = self.container.querySelector('#projectName');
+
+      if (platformDisplay && platformInfo) {
+        // Show platform badge
+        platformDisplay.style.display = 'flex';
+
+        // Update name and type
+        if (platformNameDisplay) {
+          platformNameDisplay.textContent = `${platformInfo.icon || '💻'} ${platformInfo.name || 'Platform'}`;
         }
+
+        if (platformTypeDisplay) {
+          platformTypeDisplay.textContent = platformInfo.type || 'Web';
+        }
+
+        // Update project name on left
+        if (projectName) {
+          projectName.textContent = `${platformInfo.name || 'Platform'}`;
+        }
+
+        // Hover animation
+        platformDisplay.addEventListener('mouseenter', () => {
+          platformDisplay.style.transform = 'translateY(-2px) scale(1.02)';
+          platformDisplay.style.boxShadow = '0 8px 32px rgba(102,126,234,0.4)';
+        });
+
+        platformDisplay.addEventListener('mouseleave', () => {
+          platformDisplay.style.transform = 'translateY(0) scale(1)';
+          platformDisplay.style.boxShadow = '0 4px 20px rgba(102,126,234,0.25)';
+        });
+      }
     }, 2000);
-};
+  };
 
 
   AssistantSidebar.prototype.setupGlobalShortcut = function () {
@@ -1276,7 +1680,7 @@ AssistantSidebar.prototype.stopMonitoring = function () {
       preview.style.cssText = `
       position: relative; border: 2px solid rgba(100, 100, 255, 0.3); border-radius: 12px;
       background: rgba(40, 42, 58, 0.9); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+   
       display: flex; align-items: center; justify-content: center;
       overflow: hidden; width: 70px; height: 70px;
       transition: all 0.2s;
@@ -1474,8 +1878,7 @@ AssistantSidebar.prototype.stopMonitoring = function () {
     el.style.cssText = `
     padding: 14px 16px; border-radius: 12px; max-width: 85%;
     background: ${sender === "user" ? "rgba(102,126,234,0.3)" : "rgba(255,255,255,0.12)"};
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+  
     border: 1px solid ${sender === "user" ? "rgba(102,126,234,0.4)" : "rgba(255,255,255,0.2)"};
     color: #ffffff;
     align-self: ${sender === "user" ? "flex-end" : "flex-start"};
@@ -1493,8 +1896,7 @@ AssistantSidebar.prototype.stopMonitoring = function () {
     el.style.cssText = `
     padding: 12px; border-radius: 12px; max-width: 85%;
     background: rgba(102, 126, 234, 0.3);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    
     border: 1px solid rgba(102, 126, 234, 0.4);
     align-self: flex-end;
     display: flex; flex-direction: column; gap: 8px;
@@ -1526,8 +1928,7 @@ AssistantSidebar.prototype.stopMonitoring = function () {
     display: flex; align-items: center; gap: 8px;
     padding: 14px 16px; border-radius: 12px; max-width: 140px;
     background: rgba(40, 42, 58, 0.9);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+   
     border: 1px solid rgba(255, 255, 255, 0.2);
     align-self: flex-start;
     animation: fadeIn 0.3s ease-out;
