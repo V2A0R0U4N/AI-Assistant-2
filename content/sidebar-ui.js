@@ -42,117 +42,294 @@
     `;
 
     // HEADER BAR
+    // HEADER BAR - DYNAMIC (Hidden until monitoring starts)
     const topBar = document.createElement("div");
+    topBar.id = "topBar";
     topBar.style.cssText = `
-      height: 70px; display: flex; justify-content: space-between; align-items: center;
-      padding: 0 32px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      pointer-events: auto;
-    `;
+  height: 0px;
+  overflow: hidden;
+  opacity: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 32px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+  pointer-events: auto;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
     topBar.innerHTML = `
-      <div id="topLeftPlatformDisplay" style="display: none;">
-        <div style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; text-shadow: none;">Currently Working On</div>
-        <div id="projectName" style="font-size: 16px; font-weight: 600; color: #111827; text-shadow: none;">Loading...</div>
+  <div style="flex: 1; opacity: 0;" id="topBarContent">
+    <div style="font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px;">Currently Working On</div>
+    <div id="projectName" style="font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.95); margin-top: 4px;">Platform Detection...</div>
+  </div>
+  
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <!-- Platform Badge - RIGHT SIDE, BIGGER -->
+    <div id="platformDisplay" style="
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(118,75,162,0.2) 100%);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 2px solid rgba(102,126,234,0.35);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(102,126,234,0.25);
+      transition: all 0.3s ease;
+    ">
+      <div style="
+        width: 14px;
+        height: 14px;
+        background: #4ade80;
+        border-radius: 50%;
+        animation: pulse 2.5s infinite;
+        box-shadow: 0 0 16px #4ade80, 0 0 32px rgba(74,222,128,0.4);
+      "></div>
+      <div style="text-align: left;">
+        <div id="platformNameDisplay" style="
+          font-size: 16px;
+          font-weight: 700;
+          color: rgba(255,255,255,0.98);
+          letter-spacing: 0.4px;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        ">
+          LeetCode
+        </div>
+        <div id="platformTypeDisplay" style="
+          font-size: 11px;
+          color: rgba(255,255,255,0.65);
+          margin-top: 2px;
+          font-weight: 500;
+        ">
+          Online Judge
+        </div>
       </div>
-      <div id="platformDisplay" style="display: flex; align-items: center; gap: 10px;"></div>
-      <button id="closeDashboard" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.1); color: #111827; font-size: 20px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;">×</button>
-    `;
+    </div>
+    
+    <!-- Close Button -->
+    <button id="closeDashboard" style="
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.9);
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 300;
+    ">×</button>
+  </div>
+`;
 
     this.container.appendChild(topBar);
 
-    // CHAT BOX
-    const chatContainer = document.createElement("div");
-    chatContainer.id = "chatContainer";
-    chatContainer.style.cssText = `
-      position: fixed;
-      top: 90px; right: 32px;
-      width: 420px;
-      height: calc(100vh - 120px);
-      background: rgba(255, 255, 255, 0.90);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      pointer-events: auto;
-    `;
+    // CHAT BOX - ULTRA TRANSPARENT, NO OVERLAP
+const chatContainer = document.createElement("div");
+chatContainer.id = "chatContainer";
+chatContainer.style.cssText = `
+  position: fixed;
+  top: 90px;
+  right: 32px;
+  width: 440px;
+  height: calc(100vh - 120px);
+  background: rgba(15, 15, 25, 0.25);
+  backdrop-filter: blur(120px) saturate(250%);
+  -webkit-backdrop-filter: blur(120px) saturate(250%);
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px rgba(0,0,0,0.3),
+    0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 0 rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+
 
     chatContainer.innerHTML = `
-      <!--Header-->
-      <div style="padding: 20px 24px; background: rgba(255, 255, 255, 0.95); color: #111827; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.08);">
-        <div style="font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-          <span>🤖</span><span>AI Assistant</span>
-        </div>
-      </div>
+  <!-- Header - ULTRA TRANSPARENT -->
+  <div style="
+    padding: 24px;
+    background: rgba(255,255,255,0.01);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(50px) saturate(200%);
+    color: rgba(255,255,255,0.98);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+  ">
+    <div style="font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 24px;">🤖</span>
+      <span style="text-shadow: 0 2px 8px rgba(0,0,0,0.5);">AI Assistant</span>
+    </div>
+  </div>
 
-      <!--Monitoring Control Panel-->
-      <div id="monitoringPanel" style="padding: 16px 24px; background: rgba(248, 250, 252, 0.95); border-bottom: 1px solid rgba(0,0,0,0.08);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <span style="font-size: 13px; font-weight: 600; color: #1f2937;">Real-Time Monitoring</span>
-          <button id="toggleMonitoring" style="padding: 6px 16px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(102,126,234,0.3);">
-            Start
-          </button>
-        </div>
-        <div id="monitoringStatus" style="font-size: 11px; color: #1f2937; display: none;">
-          <div style="margin-bottom: 4px;">
-            <span style="display: inline-block; width: 8px; height: 8px; background: #4ade80; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 6px #4ade80;"></span>
-            <span id="statusText">Monitoring active</span>
-          </div>
-          <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.8); border-radius: 6px; font-size: 10px; border: 1px solid rgba(0,0,0,0.06);">
-            <div style="color: #374151;">📊 Contexts: <span id="contextCount">0</span></div>
-            <div style="color: #374151;">🎯 Platform: <span id="platformName">Unknown</span></div>
-          </div>
-        </div>
+  <!-- Monitoring Control Panel - ULTRA TRANSPARENT -->
+  <div id="monitoringPanel" style="
+    padding: 20px 24px;
+    background: rgba(255,255,255,0.01);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+  ">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <span style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.95); text-shadow: 0 1px 4px rgba(0,0,0,0.3);">Real-Time Monitoring</span>
+      <button id="toggleMonitoring" style="
+        padding: 6px 16px;
+        background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.4);
+      ">
+        Start
+      </button>
+    </div>
+    <div id="monitoringStatus" style="font-size: 11px; color: rgba(255,255,255,0.85); display: none;">
+      <div style="margin-bottom: 4px;">
+        <span style="display: inline-block; width: 8px; height: 8px; background: #4ade80; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 8px #4ade80;"></span>
+        <span id="statusText">Monitoring active</span>
       </div>
-
-      <!--Messages-->
-      <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; background: rgba(249, 250, 251, 0.8);">
-        <div id="welcomeScreen" style="text-align:center; padding:40px;">
-          <div style="font-size: 64px;">🚀</div>
-          <h3 style="font-size: 20px; font-weight: 600; margin: 8px 0; color: #111827; text-shadow: none;">Welcome to CodeFlow AI</h3>
-          <p style="font-size: 14px; color: #6b7280; margin-bottom: 24px; text-shadow: none;">Start monitoring to enable context-aware assistance</p>
-          
-          <div style="display: flex; flex-direction: column; gap: 12px; max-width: 320px; margin: 0 auto;">
-            <button class="quick-action-btn" data-action="Explain this payment integration code in detail. What does each part do?">
-              <span style="font-size: 20px;">📖</span>
-              <span>Explain this payment integration</span>
-            </button>
-            <button class="quick-action-btn" data-action="Review this code for security issues, especially payment handling vulnerabilities and data validation problems.">
-              <span style="font-size: 20px;">🔒</span>
-              <span>Review for security issues</span>
-            </button>
-            <button class="quick-action-btn" data-action="Suggest improvements for this payment integration code - performance, error handling, and best practices.">
-              <span style="font-size: 20px;">⚡</span>
-              <span>Suggest improvements</span>
-            </button>
-          </div>
-        </div>
+      <div style="margin-top: 8px; padding: 8px; background: rgba(255,255,255,0.04); border-radius: 6px; font-size: 10px; border: 1px solid rgba(255,255,255,0.06);">
+        <div style="color: rgba(255,255,255,0.9);">📊 Contexts: <span id="contextCount">0</span></div>
+        <div style="color: rgba(255,255,255,0.9);">🎯 Platform: <span id="platformName">Unknown</span></div>
       </div>
+    </div>
+  </div>
 
-      <!--Input Area-->
-      <div style="padding: 20px 24px; background: rgba(248, 250, 252, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.08);">
-        <div id="filePreview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; min-height: 0; transition: all 0.3s;"></div>
-
-        <div id="inputWrapper" style="display: flex; gap: 12px; align-items: flex-end;">
-          <div style="flex: 1;">
-            <textarea id="chatInput" placeholder="Ask anything..."
-              style="width: 100%; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 2px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 12px 16px; 
-              font-size: 14px; font-family: inherit; color: #111827; resize: none; max-height: 120px; transition: all 0.2s;"></textarea>
-          </div>
-          <label for="fileInput" style="cursor: pointer; width: 44px; height: 44px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.2s;">📎</label>
-          <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.pdf,.doc,.docx,.txt,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.html,.css,.json">
-          <button id="sendBtn" style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%); border: none; border-radius: 12px; color: white; font-size: 20px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(102,126,234,0.3);">↑</button>
-        </div>
-        <div style="font-size: 11px; color: #6b7280; text-align: center; margin-top: 8px; text-shadow: none;">Press Enter to send • Shift+Enter for new line</div>
+  <!-- Messages - FULLY TRANSPARENT BACKGROUND -->
+  <div id="chatMessages" style="
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: transparent;
+  ">
+    <div id="welcomeScreen" style="text-align:center; padding:40px;">
+      <div style="font-size: 64px;">🚀</div>
+      <h3 style="
+        font-size: 20px;
+        font-weight: 600;
+        margin: 8px 0;
+        color: rgba(255,255,255,0.98);
+        text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      ">Welcome to CodeFlow AI</h3>
+      <p style="
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+        margin-bottom: 24px;
+        text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+      ">Start monitoring to enable context-aware assistance</p>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; max-width: 320px; margin: 0 auto;">
+        <button class="quick-action-btn" data-action="Explain this payment integration code in detail. What does each part do?">
+          <span style="font-size: 20px;">📖</span>
+          <span>Explain this payment integration</span>
+        </button>
+        <button class="quick-action-btn" data-action="Review this code for security issues, especially payment handling vulnerabilities and data validation problems.">
+          <span style="font-size: 20px;">🔒</span>
+          <span>Review for security issues</span>
+        </button>
+        <button class="quick-action-btn" data-action="Suggest improvements for this payment integration code - performance, error handling, and best practices.">
+          <span style="font-size: 20px;">⚡</span>
+          <span>Suggest improvements</span>
+        </button>
       </div>
-    `;
+    </div>
+  </div>
+
+  <!-- Input Area - ULTRA TRANSPARENT -->
+  <div style="
+    padding: 20px 24px;
+    background: rgba(255,255,255,0.01);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    border-top: 1px solid rgba(255,255,255,0.02);
+  ">
+    <div id="filePreview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; min-height: 0; transition: all 0.3s;"></div>
+
+    <div id="inputWrapper" style="display: flex; gap: 12px; align-items: flex-end;">
+      <div style="flex: 1;">
+        <textarea id="chatInput" placeholder="Ask anything..."
+          style="
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-family: inherit;
+            color: rgba(255,255,255,0.95);
+            resize: none;
+            max-height: 120px;
+            transition: all 0.2s;
+          "></textarea>
+      </div>
+      <label for="fileInput" style="
+        cursor: pointer;
+        width: 44px;
+        height: 44px;
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        transition: all 0.2s;
+      ">📎</label>
+      <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.pdf,.doc,.docx,.txt,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.html,.css,.json">
+      <button id="sendBtn" style="
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+      ">↑</button>
+    </div>
+    <div style="
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      text-align: center;
+      margin-top: 8px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    ">Press Enter to send • Shift+Enter for new line</div>
+  </div>
+`;
+
+
     this.container.appendChild(chatContainer);
     document.body.appendChild(this.container);
 
@@ -160,140 +337,104 @@
     this.detectAndApplyTheme();
   };
 
-  AssistantSidebar.prototype.addStyles = function () {
+AssistantSidebar.prototype.addStyles = function () {
     if (document.getElementById("codeflow-styles")) return;
-
+    
     const style = document.createElement("style");
     style.id = "codeflow-styles";
     style.textContent = `
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
       }
-
+      
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
-
+      
       @keyframes slideUp {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
       
+      /* Quick Action Buttons - Glass Effect */
       .quick-action-btn {
         display: flex;
         align-items: center;
         gap: 12px;
         padding: 14px 18px;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 2px solid rgba(0, 0, 0, 0.08);
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 2px solid rgba(255,255,255,0.1);
         border-radius: 12px;
-        color: #374151;
+        color: rgba(255,255,255,0.95);
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         text-align: left;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
       }
       
       .quick-action-btn:hover {
-        background: rgba(255, 255, 255, 1);
-        border-color: rgba(102, 126, 234, 0.4);
+        background: rgba(255,255,255,0.12);
+        border-color: rgba(102,126,234,0.5);
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
       }
       
       .quick-action-btn:active {
         transform: translateY(0);
       }
-
+      
+      /* Scrollbar Styling - Transparent */
       #chatMessages::-webkit-scrollbar {
         width: 6px;
       }
-
+      
       #chatMessages::-webkit-scrollbar-track {
-        background: rgba(249, 250, 251, 0.5);
+        background: rgba(255,255,255,0.02);
+        border-radius: 3px;
       }
-
+      
       #chatMessages::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 3px;
       }
-
+      
       #chatMessages::-webkit-scrollbar-thumb:hover {
-        background: rgba(0, 0, 0, 0.3);
+        background: rgba(255,255,255,0.25);
       }
-
-      #selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar {
-        width: 6px;
+      
+      /* Text Input Focus Effect */
+      #chatInput:focus {
+        border-color: rgba(102,126,234,0.6);
+        background: rgba(255,255,255,0.1);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
       }
-
-      #selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar-track {
-        background: rgba(249, 250, 251, 0.5);
-        border-radius: 3px;
+      
+      #chatInput::placeholder {
+        color: rgba(255,255,255,0.4);
       }
-
-      #selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar-thumb {
-        background: rgba(102, 126, 234, 0.5);
-        border-radius: 3px;
-      }
-
-      #selectedTextPreview div[style*="overflow-y"]::-webkit-scrollbar-thumb:hover {
-        background: rgba(102, 126, 234, 0.7);
-      }
-
-      #previewTextContent::-webkit-scrollbar {
-        width: 8px;
-      }
-
-      #previewTextContent::-webkit-scrollbar-track {
-        background: rgba(249, 250, 251, 0.8);
-        border-radius: 4px;
-        margin: 4px;
-      }
-
-      #previewTextContent::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
-        border-radius: 4px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-      }
-
-      #previewTextContent::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
-      }
-
-      @keyframes fadeOut {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-10px); }
-      }
-
+      
+      /* Button Hover Effects */
       #closeDashboard:hover {
-        background: rgba(0, 0, 0, 0.1) !important;
-        transform: rotate(90deg);
+        background: rgba(255,255,255,0.12) !important;
+        transform: rotate(90deg) scale(1.1);
       }
-
+      
       label[for="fileInput"]:hover,
       #sendBtn:hover {
         transform: scale(1.05);
       }
-
+      
       label[for="fileInput"]:hover {
-        background: rgba(0, 0, 0, 0.05) !important;
+        background: rgba(255,255,255,0.1) !important;
       }
-
-      #chatInput::placeholder {
-        color: rgba(0, 0, 0, 0.4);
-      }
-
-      #chatInput:focus {
-        border-color: rgba(102, 126, 234, 0.6);
-        background: rgba(255, 255, 255, 1);
-        outline: none;
-      }
-
+      
       #sendBtn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -301,53 +442,54 @@
 
       #toggleMonitoring:hover {
         transform: scale(1.05);
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+        box-shadow: 0 4px 16px rgba(102,126,234,0.6);
       }
     `;
     document.head.appendChild(style);
-  };
+};
+
 
   // Website theme detection - matches website's theme
-  AssistantSidebar.prototype.detectAndApplyTheme = function() {
+  AssistantSidebar.prototype.detectAndApplyTheme = function () {
     const self = this;
     let currentIsDark = null;
-    
+
     function isWebsiteDark() {
       const body = document.body;
       const bgColor = window.getComputedStyle(body).backgroundColor;
-      
+
       const rgb = bgColor.match(/\d+/g);
       if (rgb) {
         const r = parseInt(rgb[0]);
         const g = parseInt(rgb[1]);
         const b = parseInt(rgb[2]);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        
+
         if (brightness < 128) {
           return true;
         }
       }
-      
+
       const darkClasses = ['dark', 'dark-mode', 'theme-dark', 'darkmode'];
       const htmlClass = document.documentElement.className.toLowerCase();
       const bodyClass = document.body.className.toLowerCase();
-      
+
       for (const darkClass of darkClasses) {
         if (htmlClass.includes(darkClass) || bodyClass.includes(darkClass)) {
           return true;
         }
       }
-      
+
       const htmlTheme = document.documentElement.getAttribute('data-theme');
       const bodyTheme = document.body.getAttribute('data-theme');
-      
+
       if (htmlTheme === 'dark' || bodyTheme === 'dark') {
         return true;
       }
-      
+
       return false;
     }
-    
+
     function checkAndApply() {
       const isDark = isWebsiteDark();
       if (isDark !== currentIsDark) {
@@ -356,29 +498,29 @@
         console.log('[Theme] Applied', isDark ? 'DARK' : 'LIGHT', 'theme');
       }
     }
-    
+
     checkAndApply();
-    
+
     const observer = new MutationObserver(() => {
       checkAndApply();
     });
-    
+
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class', 'data-theme', 'style']
     });
-    
+
     observer.observe(document.body, {
       attributes: true,
       attributeFilter: ['class', 'data-theme', 'style']
     });
   };
 
-  AssistantSidebar.prototype.applyTheme = function(theme) {
+  AssistantSidebar.prototype.applyTheme = function (theme) {
     if (!this.container) return;
-    
+
     const isDark = theme === 'dark';
-    
+
     const colors = isDark ? {
       topBarBg: 'rgba(26, 27, 38, 0.95)',
       topBarText: '#ffffff',
@@ -440,13 +582,13 @@
       closeButtonBorder: 'rgba(0,0,0,0.1)',
       placeholderColor: 'rgba(0, 0, 0, 0.4)'
     };
-    
+
     const topBar = this.container.querySelector('#codeflow-dashboard > div:first-child');
     if (topBar) {
       topBar.style.background = colors.topBarBg;
       topBar.style.borderBottom = `1px solid ${colors.topBarBorder}`;
       topBar.style.boxShadow = `0 2px 12px ${colors.topBarShadow}`;
-      
+
       const platformDisplay = topBar.querySelector('#topLeftPlatformDisplay');
       if (platformDisplay) {
         const label = platformDisplay.querySelector('div:first-child');
@@ -454,7 +596,7 @@
         if (label) label.style.color = colors.topBarTextSecondary;
         if (projectName) projectName.style.color = colors.topBarText;
       }
-      
+
       const closeBtn = topBar.querySelector('#closeDashboard');
       if (closeBtn) {
         closeBtn.style.background = colors.closeButtonBg;
@@ -462,24 +604,24 @@
         closeBtn.style.border = `1px solid ${colors.closeButtonBorder}`;
       }
     }
-    
+
     const chatContainer = this.container.querySelector('#chatContainer');
     if (chatContainer) {
       chatContainer.style.background = colors.chatContainerBg;
       chatContainer.style.border = `1px solid ${colors.chatContainerBorder}`;
-      
+
       const header = chatContainer.querySelector('div:first-child');
       if (header) {
         header.style.background = colors.headerBg;
         header.style.color = colors.headerText;
       }
-      
+
       const monitoringPanel = chatContainer.querySelector('#monitoringPanel');
       if (monitoringPanel) {
         monitoringPanel.style.background = colors.monitoringPanelBg;
         const title = monitoringPanel.querySelector('span');
         if (title) title.style.color = colors.monitoringPanelText;
-        
+
         const monitoringStatus = monitoringPanel.querySelector('#monitoringStatus');
         if (monitoringStatus) {
           monitoringStatus.style.color = colors.monitoringPanelText;
@@ -490,11 +632,11 @@
           }
         }
       }
-      
+
       const chatMessages = chatContainer.querySelector('#chatMessages');
       if (chatMessages) {
         chatMessages.style.background = colors.messagesBg;
-        
+
         const welcomeScreen = chatMessages.querySelector('#welcomeScreen');
         if (welcomeScreen) {
           const title = welcomeScreen.querySelector('h3');
@@ -503,33 +645,33 @@
           if (text) text.style.color = colors.welcomeText;
         }
       }
-      
+
       const inputArea = chatContainer.querySelector('div[style*="padding: 20px 24px"]:last-child');
       if (inputArea) {
         inputArea.style.background = colors.inputAreaBg;
-        
+
         const textarea = inputArea.querySelector('#chatInput');
         if (textarea) {
           textarea.style.background = colors.textareaBg;
           textarea.style.color = colors.textareaText;
           textarea.style.border = `2px solid ${colors.textareaBorder}`;
         }
-        
+
         const fileLabel = inputArea.querySelector('label[for="fileInput"]');
         if (fileLabel) {
           fileLabel.style.background = colors.buttonBg;
           fileLabel.style.border = `1px solid ${colors.buttonBorder}`;
         }
-        
+
         const helpText = inputArea.querySelector('div[style*="font-size: 11px"]');
         if (helpText) helpText.style.color = colors.welcomeText;
       }
     }
-    
+
     this.updateQuickActionTheme(isDark);
   };
 
-  AssistantSidebar.prototype.updateQuickActionTheme = function(isDark) {
+  AssistantSidebar.prototype.updateQuickActionTheme = function (isDark) {
     const colors = isDark ? {
       bg: 'rgba(40, 42, 58, 0.9)',
       text: '#ffffff',
@@ -539,7 +681,7 @@
       text: '#374151',
       border: 'rgba(0, 0, 0, 0.08)'
     };
-    
+
     const buttons = this.container.querySelectorAll('.quick-action-btn');
     buttons.forEach(btn => {
       btn.style.background = colors.bg;
@@ -624,20 +766,20 @@
   };
 
   // NEW: Show selected text preview (Merlin-style)
-  AssistantSidebar.prototype.showSelectedTextPreview = function(text, platformInfo, selectionContext) {
+  AssistantSidebar.prototype.showSelectedTextPreview = function (text, platformInfo, selectionContext) {
     const self = this;
-    
+
     // Remove existing preview
     const existingPreview = this.container.querySelector('#selectedTextPreview');
     if (existingPreview) existingPreview.remove();
-    
+
     const isCodeBlock = selectionContext?.isCodeBlock;
-    
+
     // Calculate preview dimensions
     const lines = text.split('\n');
     const totalLines = lines.length;
     const isLongText = totalLines > 3 || text.length > 300;
-    
+
     // Create preview container
     const preview = document.createElement('div');
     preview.id = 'selectedTextPreview';
@@ -651,7 +793,7 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       position: relative;
     `;
-    
+
     // Close button (X) - top right corner
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '×';
@@ -675,24 +817,24 @@
       z-index: 10;
       line-height: 1;
     `;
-    
+
     closeButton.addEventListener('mouseenter', () => {
       closeButton.style.background = 'rgba(239, 68, 68, 1)';
       closeButton.style.transform = 'scale(1.1)';
     });
-    
+
     closeButton.addEventListener('mouseleave', () => {
       closeButton.style.background = 'rgba(239, 68, 68, 0.8)';
       closeButton.style.transform = 'scale(1)';
     });
-    
+
     closeButton.addEventListener('click', () => {
       preview.style.animation = 'fadeOut 0.3s ease-out';
       setTimeout(() => preview.remove(), 300);
     });
-    
+
     preview.appendChild(closeButton);
-    
+
     // Header with platform info
     const header = document.createElement('div');
     header.style.cssText = `
@@ -704,7 +846,7 @@ margin-bottom: 10px;
 padding-right: 30px;
 `;
 
-header.innerHTML = `
+    header.innerHTML = `
 <span style="font-size: 16px;">${platformInfo?.icon || '📝'}</span>
 <div style="flex: 1;">
   <div style="font-weight: 600; font-size: 12px; color: #a5b4fc;">
@@ -731,14 +873,14 @@ header.innerHTML = `
 </div>
 `;
 
-// Content container with collapse/expand
-const contentContainer = document.createElement('div');
-contentContainer.id = 'previewContent';
+    // Content container with collapse/expand
+    const contentContainer = document.createElement('div');
+    contentContainer.id = 'previewContent';
 
-// Preview text (collapsed by default if long)
-const previewText = document.createElement('div');
-previewText.id = 'previewTextContent';
-previewText.style.cssText = `
+    // Preview text (collapsed by default if long)
+    const previewText = document.createElement('div');
+    previewText.id = 'previewTextContent';
+    previewText.style.cssText = `
   font-family: ${isCodeBlock ? "'Courier New', 'Consolas', monospace" : 'inherit'};
   font-size: ${isCodeBlock ? '11px' : '12px'};
   white-space: pre-wrap;
@@ -754,13 +896,13 @@ previewText.style.cssText = `
   transition: max-height 0.3s ease;
 `;
 
-previewText.textContent = text;
+    previewText.textContent = text;
 
-// Add fade gradient for collapsed state
-if (isLongText) {
-  const fadeOverlay = document.createElement('div');
-  fadeOverlay.id = 'fadeOverlay';
-  fadeOverlay.style.cssText = `
+    // Add fade gradient for collapsed state
+    if (isLongText) {
+      const fadeOverlay = document.createElement('div');
+      fadeOverlay.id = 'fadeOverlay';
+      fadeOverlay.style.cssText = `
     position: absolute;
     bottom: 0;
     left: 0;
@@ -769,17 +911,17 @@ if (isLongText) {
     background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
     pointer-events: none;
   `;
-  previewText.style.position = 'relative';
-  previewText.appendChild(fadeOverlay);
-}
+      previewText.style.position = 'relative';
+      previewText.appendChild(fadeOverlay);
+    }
 
-contentContainer.appendChild(previewText);
+    contentContainer.appendChild(previewText);
 
-// Expand/Collapse button (only for long text)
-if (isLongText) {
-  const expandButton = document.createElement('button');
-  expandButton.id = 'expandButton';
-  expandButton.style.cssText = `
+    // Expand/Collapse button (only for long text)
+    if (isLongText) {
+      const expandButton = document.createElement('button');
+      expandButton.id = 'expandButton';
+      expandButton.style.cssText = `
     width: 100%;
     padding: 6px 12px;
     margin-top: 8px;
@@ -796,53 +938,53 @@ if (isLongText) {
     gap: 6px;
   `;
 
-  expandButton.innerHTML = `
+      expandButton.innerHTML = `
     <span style="font-size: 14px;">▼</span>
     <span>Show full text (${totalLines} lines)</span>
   `;
 
-  let isExpanded = false;
+      let isExpanded = false;
 
-  expandButton.addEventListener('click', () => {
-    isExpanded = !isExpanded;
-    const fadeOverlay = previewText.querySelector('#fadeOverlay');
+      expandButton.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        const fadeOverlay = previewText.querySelector('#fadeOverlay');
 
-    if (isExpanded) {
-      // Expand
-      const fullHeight = Math.min(previewText.scrollHeight, 400);
-      previewText.style.maxHeight = fullHeight + 'px';
-      previewText.style.overflowY = 'auto';
-      expandButton.innerHTML = `
+        if (isExpanded) {
+          // Expand
+          const fullHeight = Math.min(previewText.scrollHeight, 400);
+          previewText.style.maxHeight = fullHeight + 'px';
+          previewText.style.overflowY = 'auto';
+          expandButton.innerHTML = `
         <span style="font-size: 14px; transform: rotate(180deg); display: inline-block;">▼</span>
         <span>Show less</span>
       `;
-      if (fadeOverlay) fadeOverlay.style.display = 'none';
-    } else {
-      // Collapse
-      previewText.style.maxHeight = '80px';
-      previewText.style.overflowY = 'hidden';
-      expandButton.innerHTML = `
+          if (fadeOverlay) fadeOverlay.style.display = 'none';
+        } else {
+          // Collapse
+          previewText.style.maxHeight = '80px';
+          previewText.style.overflowY = 'hidden';
+          expandButton.innerHTML = `
         <span style="font-size: 14px;">▼</span>
         <span>Show full text (${totalLines} lines)</span>
       `;
-      if (fadeOverlay) fadeOverlay.style.display = 'block';
+          if (fadeOverlay) fadeOverlay.style.display = 'block';
+        }
+      });
+
+      expandButton.addEventListener('mouseenter', () => {
+        expandButton.style.background = 'rgba(255,255,255,0.15)';
+      });
+
+      expandButton.addEventListener('mouseleave', () => {
+        expandButton.style.background = 'rgba(255,255,255,0.1)';
+      });
+
+      contentContainer.appendChild(expandButton);
     }
-  });
 
-  expandButton.addEventListener('mouseenter', () => {
-    expandButton.style.background = 'rgba(255,255,255,0.15)';
-  });
-
-  expandButton.addEventListener('mouseleave', () => {
-    expandButton.style.background = 'rgba(255,255,255,0.1)';
-  });
-
-  contentContainer.appendChild(expandButton);
-}
-
-// Info footer
-const footer = document.createElement('div');
-footer.style.cssText = `
+    // Info footer
+    const footer = document.createElement('div');
+    footer.style.cssText = `
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -853,234 +995,285 @@ footer.style.cssText = `
   color: rgba(255, 255, 255, 0.6);
 `;
 
-footer.innerHTML = `
+    footer.innerHTML = `
   <span style="font-size: 12px;">ℹ️</span>
   <span>This context is automatically available to AI • Ask anything about it</span>
 `;
 
-// Assemble preview
-preview.appendChild(header);
-preview.appendChild(contentContainer);
-preview.appendChild(footer);
+    // Assemble preview
+    preview.appendChild(header);
+    preview.appendChild(contentContainer);
+    preview.appendChild(footer);
 
-// Insert into DOM
-const inputWrapper = this.container.querySelector('#inputWrapper');
-inputWrapper.parentElement.insertBefore(preview, inputWrapper);
+    // Insert into DOM
+    const inputWrapper = this.container.querySelector('#inputWrapper');
+    inputWrapper.parentElement.insertBefore(preview, inputWrapper);
 
-// Auto-remove after 60 seconds
-setTimeout(() => {
-  if (preview.parentElement) {
-    preview.style.animation = 'fadeOut 0.3s ease-out';
-    setTimeout(() => preview.remove(), 300);
-  }
-}, 60000);
-};
+    // Auto-remove after 60 seconds
+    setTimeout(() => {
+      if (preview.parentElement) {
+        preview.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => preview.remove(), 300);
+      }
+    }, 60000);
+  };
 
-AssistantSidebar.prototype.startMonitoring = function () {
-  const self = this;
-  const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
-  const monitoringStatus = this.container.querySelector("#monitoringStatus");
+  AssistantSidebar.prototype.startMonitoring = function () {
+    const self = this;
+    const topBar = self.container.querySelector('#topBar');
+    const topBarContent = self.container.querySelector('#topBarContent');
 
-  console.log("[Sidebar] 🚀 Starting monitoring...");
+    if (topBar) {
+      // Animate top bar appearing
+      setTimeout(() => {
+        topBar.style.height = '70px';
+        topBar.style.opacity = '1';
+      }, 100);
 
-  // Create ContextMonitor instance if not exists
-  if (!self.contextMonitorInstance) {
-    if (window.ContextMonitor) {
-      console.log("[Sidebar] Creating ContextMonitor instance...");
-      self.contextMonitorInstance = new window.ContextMonitor();
-      console.log("[Sidebar] ✅ ContextMonitor created!");
-    } else {
-      console.error("[Sidebar] ❌ ContextMonitor class not found!");
-      alert("ERROR: ContextMonitor not loaded! Please refresh the page.");
+      setTimeout(() => {
+        if (topBarContent) {
+          topBarContent.style.opacity = '1';
+          topBarContent.style.transition = 'opacity 0.5s ease 0.3s';
+        }
+      }, 400);
+    }
+
+    const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
+    const monitoringStatus = this.container.querySelector("#monitoringStatus");
+
+    console.log("[Sidebar] 🚀 Starting monitoring...");
+
+    // Create ContextMonitor instance if not exists
+    if (!self.contextMonitorInstance) {
+      if (window.ContextMonitor) {
+        console.log("[Sidebar] Creating ContextMonitor instance...");
+        self.contextMonitorInstance = new window.ContextMonitor();
+        console.log("[Sidebar] ✅ ContextMonitor created!");
+      } else {
+        console.error("[Sidebar] ❌ ContextMonitor class not found!");
+        alert("ERROR: ContextMonitor not loaded! Please refresh the page.");
+        return;
+      }
+    }
+
+    if (!self.contextMonitorInstance) {
+      console.error("[Sidebar] ❌ Failed to create ContextMonitor instance!");
       return;
     }
-  }
 
-  if (!self.contextMonitorInstance) {
-    console.error("[Sidebar] ❌ Failed to create ContextMonitor instance!");
-    return;
-  }
+    // Start monitoring DIRECTLY
+    console.log("[Sidebar] Starting ContextMonitor directly...");
+    self.contextMonitorInstance.start();
+    console.log("[Sidebar] ✅ ContextMonitor.start() called!");
 
-  // Start monitoring DIRECTLY
-  console.log("[Sidebar] Starting ContextMonitor directly...");
-  self.contextMonitorInstance.start();
-  console.log("[Sidebar] ✅ ContextMonitor.start() called!");
+    // Notify background
+    if (chrome.runtime && chrome.runtime.id) {
+      chrome.runtime.sendMessage({ action: "startMonitoring" }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn("[Sidebar] Background notification failed");
+        }
+      });
+    }
 
-  // Notify background
-  if (chrome.runtime && chrome.runtime.id) {
-    chrome.runtime.sendMessage({ action: "startMonitoring" }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.warn("[Sidebar] Background notification failed");
-      }
-    });
-  }
+    // Update UI
+    self.monitoringActive = true;
+    toggleMonitoringBtn.textContent = "Stop";
+    toggleMonitoringBtn.style.background = "rgba(239, 68, 68, 0.9)";
+    monitoringStatus.style.display = "block";
 
-  // Update UI
-  self.monitoringActive = true;
-  toggleMonitoringBtn.textContent = "Stop";
-  toggleMonitoringBtn.style.background = "rgba(239, 68, 68, 0.9)";
-  monitoringStatus.style.display = "block";
+    console.log("[Sidebar] ✅ Monitoring started");
 
-  console.log("[Sidebar] ✅ Monitoring started");
+    // Start stats polling
+    self.updateMonitoringStats();
 
-  // Start stats polling
-  self.updateMonitoringStats();
-
-  // NEW: Update platform display
-  self.updatePlatformDisplay();
-};
+    // NEW: Update platform display
+    self.updatePlatformDisplay();
+  };
 
 AssistantSidebar.prototype.stopMonitoring = function () {
-  const self = this;
-  const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
-  const monitoringStatus = this.container.querySelector("#monitoringStatus");
+    const self = this;
+    
+    const toggleMonitoringBtn = this.container.querySelector("#toggleMonitoring");
+    const monitoringStatus = this.container.querySelector("#monitoringStatus");
+    
+    console.log("[Sidebar] ⏹️ Stopping monitoring...");
 
-  console.log("[Sidebar] ⏹️ Stopping monitoring...");
-
-  // Stop stats interval FIRST
-  if (self.statsInterval) {
-    clearInterval(self.statsInterval);
-    self.statsInterval = null;
-    console.log("[Sidebar] Stats interval cleared");
-  }
-
-  // Stop ContextMonitor DIRECTLY
-  if (self.contextMonitorInstance) {
-    console.log("[Sidebar] Stopping ContextMonitor directly...");
-    self.contextMonitorInstance.stop();
-    console.log("[Sidebar] ✅ ContextMonitor.stop() called");
-  }
-
-  // Notify background
-  if (chrome.runtime && chrome.runtime.id) {
-    chrome.runtime.sendMessage({ action: "stopMonitoring" });
-  }
-
-  // Update UI
-  self.monitoringActive = false;
-  toggleMonitoringBtn.textContent = "Start";
-  toggleMonitoringBtn.style.background = "linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%)";
-  monitoringStatus.style.display = "none";
-
-  console.log("[Sidebar] ✅ Monitoring stopped");
-};
-
-AssistantSidebar.prototype.updateMonitoringStats = function () {
-  const self = this;
-
-  console.log("[Sidebar] Starting stats polling...");
-
-  if (self.statsInterval) {
-    clearInterval(self.statsInterval);
-  }
-
-  self.statsInterval = setInterval(() => {
-    if (!self.monitoringActive) {
-      console.log("[Sidebar] Monitoring inactive, stopping stats polling");
+    // Stop stats interval FIRST
+    if (self.statsInterval) {
       clearInterval(self.statsInterval);
       self.statsInterval = null;
+      console.log("[Sidebar] Stats interval cleared");
+    }
+
+    // Stop ContextMonitor DIRECTLY
+    if (self.contextMonitorInstance) {
+      console.log("[Sidebar] Stopping ContextMonitor directly...");
+      self.contextMonitorInstance.stop();
+      console.log("[Sidebar] ✅ ContextMonitor.stop() called");
+    }
+
+    // Notify background
+    if (chrome.runtime && chrome.runtime.id) {
+      chrome.runtime.sendMessage({ action: "stopMonitoring" });
+    }
+
+    // Update UI
+    self.monitoringActive = false;
+    toggleMonitoringBtn.textContent = "Start";
+    toggleMonitoringBtn.style.background = "linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%)";
+    monitoringStatus.style.display = "none";
+
+    // ========================================
+    // 🆕 NEW: HIDE TOP BAR WITH ANIMATION
+    // ========================================
+    const topBar = self.container.querySelector('#topBar');
+    const topBarContent = self.container.querySelector('#topBarContent');
+    
+    if (topBarContent) {
+      topBarContent.style.opacity = '0';
+    }
+    
+    setTimeout(() => {
+      if (topBar) {
+        topBar.style.height = '0px';
+        topBar.style.opacity = '0';
+      }
+    }, 200);
+    // ========================================
+    // END NEW CODE
+    // ========================================
+
+    console.log("[Sidebar] ✅ Monitoring stopped");
+};
+
+
+  AssistantSidebar.prototype.updateMonitoringStats = function () {
+    const self = this;
+
+    console.log("[Sidebar] Starting stats polling...");
+
+    if (self.statsInterval) {
+      clearInterval(self.statsInterval);
+    }
+
+    self.statsInterval = setInterval(() => {
+      if (!self.monitoringActive) {
+        console.log("[Sidebar] Monitoring inactive, stopping stats polling");
+        clearInterval(self.statsInterval);
+        self.statsInterval = null;
+        return;
+      }
+
+      // Get stats DIRECTLY from ContextMonitor instance
+      if (self.contextMonitorInstance) {
+        const status = self.contextMonitorInstance.getStatus();
+
+        const contextCount = self.container.querySelector("#contextCount");
+        const platformName = self.container.querySelector("#platformName");
+
+        if (contextCount) {
+          contextCount.textContent = status.bufferSize || 0;
+        }
+        if (platformName) {
+          const platformInfo = status.platformInfo || {};
+          platformName.textContent = platformInfo.name || 'Web';
+        }
+      }
+
+      // ALSO check background for total sent count
+      if (chrome.runtime && chrome.runtime.id) {
+        try {
+          chrome.runtime.sendMessage({ action: "getMonitoringStatus" }, (response) => {
+            if (chrome.runtime.lastError) {
+              return;
+            }
+
+            if (response && response.success && response.contextCount > 0) {
+              const contextCount = self.container.querySelector("#contextCount");
+              if (contextCount) {
+                contextCount.textContent = response.contextCount;
+              }
+            }
+          });
+        } catch (error) {
+          console.error("[Sidebar] Exception in background check:", error);
+        }
+      }
+    }, 3000);
+  };
+
+  // NEW: Update platform display in header
+  AssistantSidebar.prototype.updatePlatformDisplay = function() {
+    const self = this;
+    
+    if (!self.contextMonitorInstance) return;
+    
+    setTimeout(() => {
+        const platformInfo = self.contextMonitorInstance.getPlatformInfo();
+        
+        const platformDisplay = self.container.querySelector('#platformDisplay');
+        const platformNameDisplay = self.container.querySelector('#platformNameDisplay');
+        const platformTypeDisplay = self.container.querySelector('#platformTypeDisplay');
+        const projectName = self.container.querySelector('#projectName');
+        
+        if (platformDisplay && platformInfo) {
+            // Show platform badge
+            platformDisplay.style.display = 'flex';
+            
+            // Update name and type
+            if (platformNameDisplay) {
+                platformNameDisplay.textContent = `${platformInfo.icon || '💻'} ${platformInfo.name || 'Platform'}`;
+            }
+            
+            if (platformTypeDisplay) {
+                platformTypeDisplay.textContent = platformInfo.type || 'Web';
+            }
+            
+            // Update project name on left
+            if (projectName) {
+                projectName.textContent = `${platformInfo.name || 'Platform'}`;
+            }
+            
+            // Hover animation
+            platformDisplay.addEventListener('mouseenter', () => {
+                platformDisplay.style.transform = 'translateY(-2px) scale(1.02)';
+                platformDisplay.style.boxShadow = '0 8px 32px rgba(102,126,234,0.4)';
+            });
+            
+            platformDisplay.addEventListener('mouseleave', () => {
+                platformDisplay.style.transform = 'translateY(0) scale(1)';
+                platformDisplay.style.boxShadow = '0 4px 20px rgba(102,126,234,0.25)';
+            });
+        }
+    }, 2000);
+};
+
+
+  AssistantSidebar.prototype.setupGlobalShortcut = function () {
+    const self = this;
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "L" || e.code === "KeyL")) {
+        e.preventDefault();
+        self.toggle();
+      }
+    });
+  };
+
+  AssistantSidebar.prototype.renderFilePreview = function () {
+    const previewContainer = this.container.querySelector("#filePreview");
+    previewContainer.innerHTML = "";
+
+    if (this.selectedFiles.length === 0) {
+      previewContainer.style.minHeight = "0";
       return;
     }
 
-    // Get stats DIRECTLY from ContextMonitor instance
-    if (self.contextMonitorInstance) {
-      const status = self.contextMonitorInstance.getStatus();
+    previewContainer.style.minHeight = "70px";
 
-      const contextCount = self.container.querySelector("#contextCount");
-      const platformName = self.container.querySelector("#platformName");
-
-      if (contextCount) {
-        contextCount.textContent = status.bufferSize || 0;
-      }
-      if (platformName) {
-        const platformInfo = status.platformInfo || {};
-        platformName.textContent = platformInfo.name || 'Web';
-      }
-    }
-
-    // ALSO check background for total sent count
-    if (chrome.runtime && chrome.runtime.id) {
-      try {
-        chrome.runtime.sendMessage({ action: "getMonitoringStatus" }, (response) => {
-          if (chrome.runtime.lastError) {
-            return;
-          }
-
-          if (response && response.success && response.contextCount > 0) {
-            const contextCount = self.container.querySelector("#contextCount");
-            if (contextCount) {
-              contextCount.textContent = response.contextCount;
-            }
-          }
-        });
-      } catch (error) {
-        console.error("[Sidebar] Exception in background check:", error);
-      }
-    }
-  }, 3000);
-};
-
-// NEW: Update platform display in header
-AssistantSidebar.prototype.updatePlatformDisplay = function () {
-  const self = this;
-  
-  if (!self.contextMonitorInstance) return;
-
-  // Wait for platform detection to complete
-  setTimeout(() => {
-    const platformInfo = self.contextMonitorInstance.getPlatformInfo();
-    
-    // Update top-left display
-    const topLeftDisplay = self.container.querySelector('#topLeftPlatformDisplay');
-    const projectName = self.container.querySelector('#projectName');
-
-    if (topLeftDisplay && projectName && platformInfo) {
-      topLeftDisplay.style.display = 'block';
-      projectName.textContent = `${platformInfo.icon || '💻'} ${platformInfo.name || 'Unknown Platform'}`;
-    }
-    
-    // Update top-right display
-    const platformDisplay = self.container.querySelector('#platformDisplay');
-
-    if (platformDisplay && platformInfo) {
-      platformDisplay.innerHTML = `
-        <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; box-shadow: 0 0 8px #4ade80;"></div>
-        <div style="text-align: left;">
-          <div style="font-size: 12px; font-weight: 600;">
-            ${platformInfo.icon || '💻'} ${platformInfo.name || 'Platform'}
-          </div>
-          <div style="font-size: 9px; opacity: 0.8;">${platformInfo.type || 'Web'}</div>
-        </div>
-      `;
-    }
-  }, 2000); // Wait for AI identification
-};
-
-AssistantSidebar.prototype.setupGlobalShortcut = function () {
-  const self = this;
-  document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.shiftKey && (e.key === "L" || e.code === "KeyL")) {
-      e.preventDefault();
-      self.toggle();
-    }
-  });
-};
-
-AssistantSidebar.prototype.renderFilePreview = function () {
-  const previewContainer = this.container.querySelector("#filePreview");
-  previewContainer.innerHTML = "";
-
-  if (this.selectedFiles.length === 0) {
-    previewContainer.style.minHeight = "0";
-    return;
-  }
-
-  previewContainer.style.minHeight = "70px";
-
-  const self = this;
-  this.selectedFiles.forEach((file, index) => {
-    const preview = document.createElement("div");
-    preview.style.cssText = `
+    const self = this;
+    this.selectedFiles.forEach((file, index) => {
+      const preview = document.createElement("div");
+      preview.style.cssText = `
       position: relative; border: 2px solid rgba(100, 100, 255, 0.3); border-radius: 12px;
       background: rgba(40, 42, 58, 0.9); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1090,36 +1283,36 @@ AssistantSidebar.prototype.renderFilePreview = function () {
       animation: fadeIn 0.3s ease-out;
     `;
 
-    preview.addEventListener("mouseenter", () => {
-      preview.style.transform = "scale(1.05)";
-    });
+      preview.addEventListener("mouseenter", () => {
+        preview.style.transform = "scale(1.05)";
+      });
 
-    preview.addEventListener("mouseleave", () => {
-      preview.style.transform = "scale(1)";
-    });
+      preview.addEventListener("mouseleave", () => {
+        preview.style.transform = "scale(1)";
+      });
 
-    if (file.type.startsWith("image/")) {
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(file);
-      img.style.cssText = `
+      if (file.type.startsWith("image/")) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        img.style.cssText = `
         width: 100%; height: 100%;
         object-fit: cover;
         border-radius: 10px;
       `;
-      preview.appendChild(img);
-    } else {
-      const ext = file.name.split('.').pop().toUpperCase();
-      preview.innerHTML = `
+        preview.appendChild(img);
+      } else {
+        const ext = file.name.split('.').pop().toUpperCase();
+        preview.innerHTML = `
         <div style="text-align: center;">
           <div style="font-size: 28px;">📄</div>
           <div style="font-size: 9px; color: #ffffff; font-weight: 600; margin-top: 2px;">${ext}</div>
         </div>
       `;
-    }
+      }
 
-    const remove = document.createElement("div");
-    remove.textContent = "×";
-    remove.style.cssText = `
+      const remove = document.createElement("div");
+      remove.textContent = "×";
+      remove.style.cssText = `
       position: absolute; top: -8px; right: -8px;
       background: #ef4444; color: white;
       width: 22px; height: 22px;
@@ -1131,26 +1324,26 @@ AssistantSidebar.prototype.renderFilePreview = function () {
       transition: all 0.2s;
     `;
 
-    remove.addEventListener("mouseenter", () => {
-      remove.style.background = "#dc2626";
-      remove.style.transform = "scale(1.1)";
-    });
+      remove.addEventListener("mouseenter", () => {
+        remove.style.background = "#dc2626";
+        remove.style.transform = "scale(1.1)";
+      });
 
-    remove.addEventListener("mouseleave", () => {
-      remove.style.background = "#ef4444";
-      remove.style.transform = "scale(1)";
-    });
+      remove.addEventListener("mouseleave", () => {
+        remove.style.background = "#ef4444";
+        remove.style.transform = "scale(1)";
+      });
 
-    remove.onclick = () => {
-      self.selectedFiles.splice(index, 1);
-      self.renderFilePreview();
-    };
+      remove.onclick = () => {
+        self.selectedFiles.splice(index, 1);
+        self.renderFilePreview();
+      };
 
-    preview.appendChild(remove);
+      preview.appendChild(remove);
 
-    const fileName = document.createElement("div");
-    fileName.textContent = file.name;
-    fileName.style.cssText = `
+      const fileName = document.createElement("div");
+      fileName.textContent = file.name;
+      fileName.style.cssText = `
       position: absolute; bottom: -28px; left: 50%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.9);
@@ -1168,117 +1361,117 @@ AssistantSidebar.prototype.renderFilePreview = function () {
       text-overflow: ellipsis;
     `;
 
-    preview.addEventListener("mouseenter", () => {
-      fileName.style.opacity = "1";
+      preview.addEventListener("mouseenter", () => {
+        fileName.style.opacity = "1";
+      });
+
+      preview.addEventListener("mouseleave", () => {
+        fileName.style.opacity = "0";
+      });
+
+      preview.appendChild(fileName);
+      previewContainer.appendChild(preview);
     });
+  };
 
-    preview.addEventListener("mouseleave", () => {
-      fileName.style.opacity = "0";
-    });
-
-    preview.appendChild(fileName);
-    previewContainer.appendChild(preview);
-  });
-};
-
-AssistantSidebar.prototype.show = function () {
-  if (this.container) {
-    this.container.style.display = "flex";
-    this.isVisible = true;
-    setTimeout(() => {
-      const input = this.container.querySelector("#chatInput");
-      if (input) input.focus();
-    }, 100);
-  }
-};
-
-AssistantSidebar.prototype.hide = function () {
-  if (this.container) {
-    this.container.style.display = "none";
-    this.isVisible = false;
-
-    if (this.statsInterval) {
-      clearInterval(this.statsInterval);
-      this.statsInterval = null;
+  AssistantSidebar.prototype.show = function () {
+    if (this.container) {
+      this.container.style.display = "flex";
+      this.isVisible = true;
+      setTimeout(() => {
+        const input = this.container.querySelector("#chatInput");
+        if (input) input.focus();
+      }, 100);
     }
-  }
-};
+  };
 
-AssistantSidebar.prototype.toggle = function () {
-  if (this.isVisible) {
-    this.hide();
-  } else {
-    this.show();
-  }
-};
+  AssistantSidebar.prototype.hide = function () {
+    if (this.container) {
+      this.container.style.display = "none";
+      this.isVisible = false;
 
-AssistantSidebar.prototype.sendMessage = function () {
-  const input = this.container.querySelector("#chatInput");
-  const sendBtn = this.container.querySelector("#sendBtn");
-  const text = input.value.trim();
-  const hasFiles = this.selectedFiles.length > 0;
-
-  if (!text && !hasFiles) return;
-  if (this.isAwaitingResponse) return;
-
-  const welcomeScreen = this.container.querySelector("#welcomeScreen");
-  if (welcomeScreen) welcomeScreen.remove();
-
-  if (text) {
-    this.addMessage("user", text);
-    this.conversationHistory.push({ role: "user", content: text });
-  }
-
-  this.selectedFiles.forEach((f) => this.addFileMessage(f));
-
-  this.selectedFiles = [];
-  this.renderFilePreview();
-  input.value = "";
-  input.style.height = "auto";
-
-  this.isAwaitingResponse = true;
-  sendBtn.disabled = true;
-  this.addTypingIndicator();
-
-  const self = this;
-  chrome.runtime.sendMessage({
-    action: "chatMessage",
-    message: text
-  }, function (response) {
-    self.removeTypingIndicator();
-    self.isAwaitingResponse = false;
-    sendBtn.disabled = false;
-
-    if (chrome.runtime.lastError) {
-      console.error("Message error:", chrome.runtime.lastError.message);
-      self.addMessage("assistant", "⚠️ Connection error. Please reload the page and try again.");
-      return;
+      if (this.statsInterval) {
+        clearInterval(this.statsInterval);
+        this.statsInterval = null;
+      }
     }
+  };
 
-    if (response && response.success) {
-      self.addMessage("assistant", response.response);
-      self.conversationHistory.push({ role: "assistant", content: response.response });
+  AssistantSidebar.prototype.toggle = function () {
+    if (this.isVisible) {
+      this.hide();
     } else {
-      const errorMsg = response ? response.response : "An unknown error occurred.";
-      self.addMessage("assistant", errorMsg);
+      this.show();
     }
-  });
-};
+  };
 
-AssistantSidebar.prototype.addMessage = function (sender, msg) {
-  const chat = this.container.querySelector("#chatMessages");
-  const el = document.createElement("div");
+  AssistantSidebar.prototype.sendMessage = function () {
+    const input = this.container.querySelector("#chatInput");
+    const sendBtn = this.container.querySelector("#sendBtn");
+    const text = input.value.trim();
+    const hasFiles = this.selectedFiles.length > 0;
 
-  let formattedMsg = msg
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/``````/g, (match, code) => {
-      return `<pre style="background: rgba(0,0,0,0.4); color: #e5e7eb; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin: 8px 0; border: 1px solid rgba(255,255,255,0.1);"><code>${this.escapeHtml(code)}</code></pre>`;
-    })
-    .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">$1</code>')
-    .replace(/\n/g, '<br>');
+    if (!text && !hasFiles) return;
+    if (this.isAwaitingResponse) return;
 
-  el.innerHTML = formattedMsg;
-  el.style.cssText = `
+    const welcomeScreen = this.container.querySelector("#welcomeScreen");
+    if (welcomeScreen) welcomeScreen.remove();
+
+    if (text) {
+      this.addMessage("user", text);
+      this.conversationHistory.push({ role: "user", content: text });
+    }
+
+    this.selectedFiles.forEach((f) => this.addFileMessage(f));
+
+    this.selectedFiles = [];
+    this.renderFilePreview();
+    input.value = "";
+    input.style.height = "auto";
+
+    this.isAwaitingResponse = true;
+    sendBtn.disabled = true;
+    this.addTypingIndicator();
+
+    const self = this;
+    chrome.runtime.sendMessage({
+      action: "chatMessage",
+      message: text
+    }, function (response) {
+      self.removeTypingIndicator();
+      self.isAwaitingResponse = false;
+      sendBtn.disabled = false;
+
+      if (chrome.runtime.lastError) {
+        console.error("Message error:", chrome.runtime.lastError.message);
+        self.addMessage("assistant", "⚠️ Connection error. Please reload the page and try again.");
+        return;
+      }
+
+      if (response && response.success) {
+        self.addMessage("assistant", response.response);
+        self.conversationHistory.push({ role: "assistant", content: response.response });
+      } else {
+        const errorMsg = response ? response.response : "An unknown error occurred.";
+        self.addMessage("assistant", errorMsg);
+      }
+    });
+  };
+
+  AssistantSidebar.prototype.addMessage = function (sender, msg) {
+    const chat = this.container.querySelector("#chatMessages");
+    const el = document.createElement("div");
+
+    let formattedMsg = msg
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/``````/g, (match, code) => {
+        return `<pre style="background: rgba(0,0,0,0.4); color: #e5e7eb; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin: 8px 0; border: 1px solid rgba(255,255,255,0.1);"><code>${this.escapeHtml(code)}</code></pre>`;
+      })
+      .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">$1</code>')
+      .replace(/\n/g, '<br>');
+
+    el.innerHTML = formattedMsg;
+    el.style.cssText = `
     padding: 14px 16px; border-radius: 12px; max-width: 85%;
     background: ${sender === "user" ? "rgba(102,126,234,0.3)" : "rgba(255,255,255,0.12)"};
     backdrop-filter: blur(15px);
@@ -1290,14 +1483,14 @@ AssistantSidebar.prototype.addMessage = function (sender, msg) {
     animation: fadeIn 0.3s ease-out;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   `;
-  chat.appendChild(el);
-  chat.scrollTop = chat.scrollHeight;
-};
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+  };
 
-AssistantSidebar.prototype.addFileMessage = function (file) {
-  const chat = this.container.querySelector("#chatMessages");
-  const el = document.createElement("div");
-  el.style.cssText = `
+  AssistantSidebar.prototype.addFileMessage = function (file) {
+    const chat = this.container.querySelector("#chatMessages");
+    const el = document.createElement("div");
+    el.style.cssText = `
     padding: 12px; border-radius: 12px; max-width: 85%;
     background: rgba(102, 126, 234, 0.3);
     backdrop-filter: blur(15px);
@@ -1309,27 +1502,27 @@ AssistantSidebar.prototype.addFileMessage = function (file) {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   `;
 
-  const name = document.createElement("div");
-  name.textContent = `${file.type.startsWith("image/") ? "🖼️" : "📄"} ${file.name}`;
-  name.style.cssText = "font-size: 13px; color: #ffffff; font-weight: 500;";
-  el.appendChild(name);
+    const name = document.createElement("div");
+    name.textContent = `${file.type.startsWith("image/") ? "🖼️" : "📄"} ${file.name}`;
+    name.style.cssText = "font-size: 13px; color: #ffffff; font-weight: 500;";
+    el.appendChild(name);
 
-  if (file.type.startsWith("image/")) {
-    const img = document.createElement("img");
-    img.src = URL.createObjectURL(file);
-    img.style.cssText = `max-width: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.2);`;
-    el.appendChild(img);
-  }
+    if (file.type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(file);
+      img.style.cssText = `max-width: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.2);`;
+      el.appendChild(img);
+    }
 
-  chat.appendChild(el);
-  chat.scrollTop = chat.scrollHeight;
-};
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+  };
 
-AssistantSidebar.prototype.addTypingIndicator = function () {
-  const chat = this.container.querySelector("#chatMessages");
-  const ind = document.createElement("div");
-  ind.id = "typingIndicator";
-  ind.style.cssText = `
+  AssistantSidebar.prototype.addTypingIndicator = function () {
+    const chat = this.container.querySelector("#chatMessages");
+    const ind = document.createElement("div");
+    ind.id = "typingIndicator";
+    ind.style.cssText = `
     display: flex; align-items: center; gap: 8px;
     padding: 14px 16px; border-radius: 12px; max-width: 140px;
     background: rgba(40, 42, 58, 0.9);
@@ -1340,7 +1533,7 @@ AssistantSidebar.prototype.addTypingIndicator = function () {
     animation: fadeIn 0.3s ease-out;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   `;
-  ind.innerHTML = `
+    ind.innerHTML = `
     <div style="display: flex; gap: 4px;">
       <div style="width: 8px; height: 8px; background: #a5b4fc; border-radius: 50%; animation: pulse 1.4s infinite; box-shadow: 0 0 8px rgba(165,180,252,0.5);"></div>
       <div style="width: 8px; height: 8px; background: #a5b4fc; border-radius: 50%; animation: pulse 1.4s infinite 0.2s; box-shadow: 0 0 8px rgba(165,180,252,0.5);"></div>
@@ -1348,20 +1541,20 @@ AssistantSidebar.prototype.addTypingIndicator = function () {
     </div>
     <span style="font-size: 12px; color: #ffffff; font-weight: 500;">AI thinking...</span>
   `;
-  chat.appendChild(ind);
-  chat.scrollTop = chat.scrollHeight;
-};
+    chat.appendChild(ind);
+    chat.scrollTop = chat.scrollHeight;
+  };
 
-AssistantSidebar.prototype.removeTypingIndicator = function () {
-  const ind = this.container.querySelector("#typingIndicator");
-  if (ind) ind.remove();
-};
+  AssistantSidebar.prototype.removeTypingIndicator = function () {
+    const ind = this.container.querySelector("#typingIndicator");
+    if (ind) ind.remove();
+  };
 
-AssistantSidebar.prototype.escapeHtml = function (text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-};
+  AssistantSidebar.prototype.escapeHtml = function (text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
 
-window.AssistantSidebar = AssistantSidebar;
+  window.AssistantSidebar = AssistantSidebar;
 })();
