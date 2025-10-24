@@ -632,7 +632,7 @@ Respond with JSON only:
                     border-radius: 10px;
                     border: 1px solid rgba(100, 150, 255, 0.4);
                     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-                    z-index: 999999;
+                    z-index: 9999;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                     font-size: 14px;
                     font-weight: 500;
