@@ -11,14 +11,28 @@
     this.monitoringActive = false;
     this.statsInterval = null;
     this.contextMonitorInstance = null;
+
     this.init();
   };
 
-  AssistantSidebar.prototype.init = function () {
+   AssistantSidebar.prototype.init = function () {
+    const self = this;
     this.createDashboard();
     this.setupEvents();
     this.setupGlobalShortcut();
     this.setupSelectionListener();
+    
+    // Track scroll to move sidebar with page
+    let ticking = false;
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        window.requestAnimationFrame(function() {
+          self.updateSidebarPosition();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
   };
 
   AssistantSidebar.prototype.createDashboard = function () {
@@ -151,7 +165,7 @@ background: transparent;
     const chatContainer = document.createElement("div");
     chatContainer.id = "chatContainer";
    chatContainer.style.cssText = `
-  position: fixed;
+  position: absolute;
   top: 90px;
   right: 32px;
   width: 440px;
@@ -307,10 +321,12 @@ Line 171:   border: 1px solid rgba(0, 0, 0, 0.08);
 
     <div id="inputWrapper" style="display: flex; gap: 12px; align-items: flex-end;">
       <div style="flex: 1;">
-        <textarea id="chatInput" placeholder="Ask anything..."
-          style="
-            width: 100%;
-            background: rgba(255,255,255,0.06);
+       <textarea id="chatInput" 
+  placeholder="Ask anything..."
+  style="
+    flex: 1;
+    background: linear-gradient(135deg, rgba(20, 25, 35, 0.95), rgba(25, 30, 40, 0.95));
+
         
             border: 2px solid rgba(255,255,255,0.1);
             border-radius: 12px;
@@ -394,7 +410,7 @@ this.container.appendChild(chatContainer);
     permanentCloseBtn.id = "permanentCloseBtn";
     permanentCloseBtn.innerHTML = "×";
 permanentCloseBtn.style.cssText = `
-  position: fixed;
+  position: absolute;
   top: 20px;
   right: 20px;
   width: 56px;
@@ -479,10 +495,11 @@ permanentCloseBtn.style.cssText = `
       }
       
       /* Container Floating Animation */
+     /* Sidebar scrolls with page */
       #chatContainer {
-        animation: float 8s ease-in-out infinite;
+        position: absolute !important;
+        z-index: 2147483647 !important;
       }
-      
       /* Parallax Hover */
       #chatContainer:hover {
         transform: translateY(-4px) translateZ(0) !important;
@@ -560,14 +577,41 @@ permanentCloseBtn.style.cssText = `
          INPUT TEXT COLOR FIX
          ============================================ */
       
-      #chatInput {
-        color: #1f2937 !important;
+       /* Chat Input - Universal Visibility */
+          /* Chat Input Text - Universal Visibility */
+         /* Chat Input - Lock Text Color (No Dynamic Changes) */
+      #chatInput,
+      #chatInput:focus,
+      #chatInput:active,
+      #chatInput:valid,
+      #chatInput:-webkit-autofill,
+      #chatInput:-webkit-autofill:hover,
+      #chatInput:-webkit-autofill:focus,
+      #chatInput:-webkit-autofill:active {
+        color: #e0e7ff !important;
+        -webkit-text-fill-color: #e0e7ff !important;
+        font-weight: 500 !important;
+        caret-color: #818cf8 !important;
+        text-shadow: 
+          0 1px 3px rgba(0, 0, 0, 0.9),
+          0 -1px 3px rgba(255, 255, 255, 0.3) !important;
       }
       
       #chatInput::placeholder {
-        color: rgba(107, 114, 128, 0.6) !important;
+        color: rgba(156, 163, 175, 0.7) !important;
+        -webkit-text-fill-color: rgba(156, 163, 175, 0.7) !important;
+        opacity: 1 !important;
       }
       
+      /* Prevent browser from changing styles */
+      #chatInput:-webkit-autofill,
+      #chatInput:-webkit-autofill:hover,
+      #chatInput:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+        transition: background-color 5000s ease-in-out 0s !important;
+      }
+
+
       /* Input Focus Glow */
       #chatInput:focus {
         background: rgba(255,255,255,0.12) !important;
@@ -1169,6 +1213,18 @@ if (permCloseBtn) {
     });
   };
 
+    // NEW FUNCTION: Makes sidebar follow scroll position
+  AssistantSidebar.prototype.updateSidebarPosition = function() {
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (this.container) {
+      // Move the container down as user scrolls
+      this.container.style.transform = `translateY(${scrollY}px)`;
+    }
+  };
+
+  
+
   // NEW: Show selected text preview (Merlin-style)
   AssistantSidebar.prototype.showSelectedTextPreview = function (text, platformInfo, selectionContext) {
     const self = this;
@@ -1284,40 +1340,54 @@ padding-right: 30px;
     // Preview text (collapsed by default if long)
     const previewText = document.createElement('div');
     previewText.id = 'previewTextContent';
-    previewText.style.cssText = `
+        // Calculate dynamic height based on text length
+    const estimatedHeight = Math.min(
+      totalLines * 24 + 40,  // 24px per line + 40px padding
+      window.innerHeight * 0.6  // Max 60% of screen height
+    );
+    
+previewText.style.cssText = `
   font-family: ${isCodeBlock ? "'Courier New', 'Consolas', monospace" : 'inherit'};
   font-size: ${isCodeBlock ? '11px' : '12px'};
   white-space: pre-wrap;
   word-wrap: break-word;
   background: rgba(0, 0, 0, 0.4);
-  padding: 12px;
+  padding: 20px 20px 300px 20px;
   border-radius: 8px;
   color: rgba(255, 255, 255, 1);
   line-height: 1.6;
-  max-height: ${isLongText ? '80px' : 'none'};
-  overflow: hidden;
-  position: relative;
-  transition: max-height 0.3s ease;
+  max-height: 70vh;
+  overflow-y: scroll;
+  overflow-x: hidden;
 `;
+
 
     previewText.textContent = text;
 
     // Add fade gradient for collapsed state
-    if (isLongText) {
-      const fadeOverlay = document.createElement('div');
-      fadeOverlay.id = 'fadeOverlay';
-      fadeOverlay.style.cssText = `
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
-    pointer-events: none;
-  `;
-      previewText.style.position = 'relative';
-      previewText.appendChild(fadeOverlay);
-    }
+  //   if (isLongText) {
+  //     const fadeOverlay = document.createElement('div');
+  //     fadeOverlay.id = 'fadeOverlay';
+  //     fadeOverlay.style.cssText = `
+  //   position: absolute;
+  //   bottom: 0;
+  //   left: 0;
+  //   right: 0;
+  //   height: 40px;
+  //   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
+  //   pointer-events: none;
+  //   opacity: 1;
+  //   transition: opacity 0.3s ease;
+  // `;
+  //     previewText.style.position = 'relative';
+  //     previewText.appendChild(fadeOverlay);
+      
+  //     // Hide fade overlay when user scrolls near bottom
+  //     previewText.addEventListener('scroll', function() {
+  //       const isNearBottom = previewText.scrollHeight - previewText.scrollTop <= previewText.clientHeight + 50;
+  //       fadeOverlay.style.opacity = isNearBottom ? '0' : '1';
+  //     });
+  //   }
 
     contentContainer.appendChild(previewText);
 
