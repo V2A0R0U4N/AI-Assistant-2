@@ -23,6 +23,9 @@
         {
             "matches": ["<all_urls>"],
             "js": [
+                "content/dom-parser.js",
+                "content/input-tracker.js",
+                "content/scroll-tracker.js",
                 "content/context-monitor.js",
                 "content/sidebar-ui.js",
                 "content/content-script.js"

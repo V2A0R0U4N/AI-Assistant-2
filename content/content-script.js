@@ -1,4 +1,4 @@
-/* CodeFlow AI - Content Script with Privacy-First Lazy Initialization */
+/* CodeFlow AI - Content Script with Privacy-First Lazy Initialization + Advanced Trackers */
 (function() {
     'use strict';
 
@@ -21,11 +21,18 @@
             
             const hasAssistantSidebar = typeof window.AssistantSidebar !== 'undefined';
             const hasContextMonitor = typeof window.ContextMonitor !== 'undefined';
+            // NEW: Check for advanced trackers
+            const hasDOMParser = typeof window.CodeFlowDOMParser !== 'undefined';
+            const hasInputTracker = typeof window.InputTracker !== 'undefined';
+            const hasScrollTracker = typeof window.ScrollTracker !== 'undefined';
 
             if (attempts % 10 === 0) {
                 console.log("Dependency check attempt", attempts, {
                     hasAssistantSidebar,
-                    hasContextMonitor
+                    hasContextMonitor,
+                    hasDOMParser,
+                    hasInputTracker,
+                    hasScrollTracker
                 });
             }
 
@@ -38,10 +45,42 @@
                 console.error("CodeFlow AI: Failed to load dependencies");
                 console.error("Missing:", {
                     sidebar: !hasAssistantSidebar,
-                    contextMonitor: !hasContextMonitor
+                    contextMonitor: !hasContextMonitor,
+                    domParser: !hasDOMParser,
+                    inputTracker: !hasInputTracker,
+                    scrollTracker: !hasScrollTracker
                 });
             }
         }, 100);
+    }
+
+    // ========================================
+    // NEW: Initialize Advanced Trackers
+    // ========================================
+    function initializeAdvancedTrackers(contextMonitor) {
+        console.log("[ContentScript] 🚀 Initializing advanced trackers...");
+        
+        // Wait for all tracker scripts to load
+        const checkTrackers = setInterval(() => {
+            if (window.CodeFlowDOMParser && window.InputTracker && window.ScrollTracker) {
+                clearInterval(checkTrackers);
+                
+                console.log("[ContentScript] ✅ All trackers loaded");
+                
+                // Note: Trackers will be started when monitoring begins
+                // They are not started automatically (privacy-first approach)
+                
+                console.log("[ContentScript] 📌 Trackers ready (will start with monitoring)");
+            }
+        }, 100);
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+            clearInterval(checkTrackers);
+            if (!window.DOMParser || !window.InputTracker || !window.ScrollTracker) {
+                console.warn("[ContentScript] ⚠️ Some trackers failed to load");
+            }
+        }, 5000);
     }
 
     // Initialize all components
@@ -54,6 +93,9 @@
             try {
                 contextMonitor = new window.ContextMonitor();
                 console.log("✅ Context Monitor created (passive - no detection yet)");
+                
+                // NEW: Initialize advanced trackers
+                initializeAdvancedTrackers(contextMonitor);
             } catch (e) {
                 console.error("❌ Context Monitor creation failed:", e);
             }
