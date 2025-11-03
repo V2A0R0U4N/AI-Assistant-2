@@ -1,4 +1,4 @@
-/* CodeFlow AI - Service Worker with Robust Error Handling */
+/* CodeFlow AI - Service Worker with Phase 2 Tracking */
 
 console.log("CodeFlow AI: Service Worker Started");
 
@@ -7,6 +7,18 @@ console.log("CodeFlow AI: Service Worker Started");
 // ========================================
 const GEMINI_API_KEY = "AIzaSyCZK64M10nVeeePewb0zOV04RhJesubWKk";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
+
+// ========================================
+// PHASE 2: BATCH TRACKING CONFIGURATION
+// ========================================
+const BATCH_CONFIG = {
+  maxEvents: 20,
+  timeInterval: 5000, // 5 seconds
+};
+
+let eventBatch = [];
+let batchTimer = null;
+const BACKEND_URL = 'http://localhost:5000/api/tracking';
 
 // ========================================
 // MONITORING STATE
@@ -36,63 +48,89 @@ function initializeSession() {
     monitoringState.contextCount = 0;
     monitoringState.platform = 'unknown';
     monitoringState.platformIdentity = null;
+    eventBatch = []; // Clear event batch
     console.log("Service Worker: ✅ Session initialized:", monitoringState.sessionId);
 }
 
 // ========================================
-// MESSAGE HANDLERS
+// BATCH MANAGEMENT (PHASE 2)
+// ========================================
+function flushBatch(sessionId) {
+  if (eventBatch.length === 0) return;
+
+  const eventsToSend = [...eventBatch];
+  eventBatch = [];
+
+  sendToBackend(sessionId, eventsToSend);
+}
+
+function scheduleBatchFlush(sessionId) {
+  if (batchTimer) clearTimeout(batchTimer);
+
+  batchTimer = setTimeout(() => {
+    flushBatch(sessionId);
+  }, BATCH_CONFIG.timeInterval);
+}
+
+// ========================================
+// UNIFIED MESSAGE HANDLER
 // ========================================
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("Service Worker: 📨 Message:", request.action);
 
-    switch(request.action) {
-        case "toggleMonitoring":
-            handleToggleMonitoring(request, sender.tab?.id);
-            sendResponse({ success: true });
-            break;
+    try {
+        switch(request.action) {
+            case "toggleMonitoring":
+                handleToggleMonitoring(request, sender.tab?.id);
+                sendResponse({ success: true });
+                break;
 
-        case "startMonitoring":
-            handleStartMonitoring(sender.tab?.id);
-            sendResponse({ success: true, sessionId: monitoringState.sessionId });
-            break;
+            case "startMonitoring":
+                handleStartMonitoring(sender.tab?.id, request);
+                sendResponse({ success: true, sessionId: monitoringState.sessionId });
+                break;
 
-        case "stopMonitoring":
-            handleStopMonitoring();
-            sendResponse({ success: true });
-            break;
+            case "stopMonitoring":
+                handleStopMonitoring();
+                sendResponse({ success: true });
+                break;
 
-        case "getMonitoringStatus":
-            sendResponse({
-                success: true,
-                isActive: monitoringState.isActive,
-                platform: monitoringState.platform,
-                platformIdentity: monitoringState.platformIdentity,
-                contextCount: monitoringState.contextCount,
-                sessionId: monitoringState.sessionId
-            });
-            break;
+            case "getMonitoringStatus":
+                sendResponse({
+                    success: true,
+                    isActive: monitoringState.isActive,
+                    platform: monitoringState.platform,
+                    platformIdentity: monitoringState.platformIdentity,
+                    contextCount: monitoringState.contextCount,
+                    sessionId: monitoringState.sessionId
+                });
+                break;
 
-        case "contextBatchUpdate":
-            handleContextBatchUpdate(request, sender.tab?.id);
-            sendResponse({ success: true, contextCount: monitoringState.contextCount });
-            break;
+            case "contextBatchUpdate":
+                handleContextBatchUpdate(request, sender.tab?.id);
+                sendResponse({ success: true, contextCount: monitoringState.contextCount });
+                break;
 
-        case "identifyPlatform":
-            handlePlatformIdentification(request, sendResponse);
-            return true; // Async response
+            case "identifyPlatform":
+                handlePlatformIdentification(request, sendResponse);
+                return true; // Async response
 
-        case "chatMessage":
-            handleChatMessage(request, sendResponse);
-            return true; // Async response
+            case "chatMessage":
+                handleChatMessage(request, sendResponse);
+                return true; // Async response
 
-        case "taskUpdate":
-            handleTaskUpdate(request);
-            sendResponse({ success: true });
-            break;
+            case "taskUpdate":
+                handleTaskUpdate(request);
+                sendResponse({ success: true });
+                break;
 
-        default:
-            console.log("Service Worker: ⚠️ Unknown action:", request.action);
-            sendResponse({ success: false, error: "Unknown action" });
+            default:
+                console.log("Service Worker: ⚠️ Unknown action:", request.action);
+                sendResponse({ success: false, error: "Unknown action" });
+        }
+    } catch (error) {
+        console.error('❌ Message handler error:', error);
+        sendResponse({ success: false, error: error.message });
     }
 
     return true;
@@ -110,15 +148,28 @@ function handleToggleMonitoring(request, tabId) {
         console.log("Service Worker: ✅ Monitoring activated");
     } else {
         console.log("Service Worker: ⏹️ Monitoring deactivated");
+        if (monitoringState.sessionId) {
+            flushBatch(monitoringState.sessionId);
+            endSession(monitoringState.sessionId);
+        }
     }
 }
 
-function handleStartMonitoring(tabId) {
+function handleStartMonitoring(tabId, request) {
     if (!monitoringState.isActive) {
         monitoringState.isActive = true;
         monitoringState.activeTab = tabId;
         initializeSession();
         console.log("Service Worker: ✅ Monitoring started");
+        
+        // Create session in backend
+        createSession(monitoringState.sessionId, {
+            platform: request.platform || 'Unknown',
+            url: request.url,
+            hostname: request.hostname
+        }).catch(error => {
+            console.error('❌ Error creating backend session:', error);
+        });
     }
 }
 
@@ -127,6 +178,12 @@ function handleStopMonitoring() {
         monitoringState.isActive = false;
         console.log("Service Worker: ⏹️ Monitoring stopped");
         console.log(`Final stats - Contexts: ${monitoringState.contextCount}, Platform: ${monitoringState.platform}`);
+        
+        // Flush remaining events and end session
+        if (monitoringState.sessionId) {
+            flushBatch(monitoringState.sessionId);
+            endSession(monitoringState.sessionId);
+        }
     }
 }
 
@@ -136,7 +193,7 @@ function handleTaskUpdate(request) {
 }
 
 // ========================================
-// CONTEXT BATCH HANDLER
+// CONTEXT BATCH HANDLER (PHASE 1 + PHASE 2)
 // ========================================
 function handleContextBatchUpdate(request, tabId) {
     console.log(`Service Worker: 📦 Received ${request.contexts.length} contexts`);
@@ -150,6 +207,7 @@ function handleContextBatchUpdate(request, tabId) {
         console.log(`Service Worker: 🏷️ Platform: ${request.platformInfo.name}`);
     }
     
+    // Store in activity buffer (Phase 1)
     request.contexts.forEach(ctx => {
         ctx.tabId = tabId;
         ctx.sessionId = monitoringState.sessionId;
@@ -159,11 +217,25 @@ function handleContextBatchUpdate(request, tabId) {
     
     console.log(`Service Worker: ✅ Total contexts: ${monitoringState.contextCount}`);
     
-    sendContextsToBackend(request.contexts);
+    // Add to event batch (Phase 2)
+    if (request.contexts && Array.isArray(request.contexts)) {
+        eventBatch.push(...request.contexts.map(ctx => ({
+          type: ctx.type,
+          data: ctx,
+          timestamp: ctx.timestamp || Date.now()
+        })));
+    }
+    
+    // Check if batch should be flushed
+    if (eventBatch.length >= BATCH_CONFIG.maxEvents) {
+        flushBatch(monitoringState.sessionId);
+    } else {
+        scheduleBatchFlush(monitoringState.sessionId);
+    }
 }
 
 // ========================================
-// AI PLATFORM IDENTIFICATION (ROBUST)
+// AI PLATFORM IDENTIFICATION
 // ========================================
 async function handlePlatformIdentification(request, sendResponse) {
     console.log('Service Worker: 🤖 Identifying platform with AI...');
@@ -173,15 +245,12 @@ async function handlePlatformIdentification(request, sendResponse) {
         
         let identity;
         
-        // ROBUST PARSING: Try multiple methods
         try {
-            // Method 1: Direct JSON parse
             identity = JSON.parse(aiResponse);
             console.log('Service Worker: ✅ Direct JSON parse successful');
         } catch (directParseError) {
             console.log('Service Worker: Direct parse failed, trying extraction...');
             
-            // Method 2: Extract from markdown code blocks
             const jsonMatch = aiResponse.match(/``````/);
             
             if (jsonMatch) {
@@ -192,7 +261,6 @@ async function handlePlatformIdentification(request, sendResponse) {
                     throw new Error('Failed to parse extracted JSON');
                 }
             } else {
-                // Method 3: Find JSON object in response
                 const objectMatch = aiResponse.match(/\{[\s\S]*\}/);
                 if (objectMatch) {
                     try {
@@ -207,7 +275,6 @@ async function handlePlatformIdentification(request, sendResponse) {
             }
         }
         
-        // Validate and ensure required fields
         if (!identity || typeof identity !== 'object') {
             throw new Error('Invalid identity object');
         }
@@ -227,7 +294,6 @@ async function handlePlatformIdentification(request, sendResponse) {
     } catch (error) {
         console.error('Service Worker: ❌ Platform identification error:', error);
         
-        // FALLBACK: Return default identity instead of error
         const fallbackIdentity = {
             name: 'Platform',
             type: 'Web',
@@ -367,30 +433,139 @@ async function callGeminiAPI(prompt) {
 }
 
 // ========================================
-// BACKEND API COMMUNICATION
+// PHASE 2: BACKEND API CALLS
 // ========================================
-async function sendContextsToBackend(contexts) {
-    const BACKEND_URL = 'http://localhost:5000/api/context/batch';
-    
-    try {
-        const response = await fetch(BACKEND_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                contexts,
-                sessionId: monitoringState.sessionId,
-                platformInfo: monitoringState.platformIdentity
-            })
+async function createSession(sessionId, metadata) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/session/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId,
+        platform: metadata.platform || 'Unknown',
+        url: metadata.url,
+        hostname: metadata.hostname,
+        userId: await getUserId()
+      })
+    });
+
+    const data = await response.json();
+    console.log('✅ Backend session created:', data);
+    return data;
+
+  } catch (error) {
+    console.error('❌ Error creating backend session:', error);
+    throw error;
+  }
+}
+
+async function sendToBackend(sessionId, events) {
+  try {
+    if (events.length === 0) return;
+
+    const platformInfo = await getPlatformInfo();
+
+    const payload = {
+      sessionId,
+      events: events,
+      platform: platformInfo.platform,
+      url: platformInfo.url,
+      hostname: platformInfo.hostname,
+      timestamp: Date.now()
+    };
+
+    const response = await fetch(`${BACKEND_URL}/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    console.log('📤 Events sent to backend:', {
+      sent: events.length,
+      stored: data.eventsStored,
+      stats: data.sessionStats
+    });
+
+    return data;
+
+  } catch (error) {
+    console.error('❌ Error sending to backend:', error);
+  }
+}
+
+async function endSession(sessionId) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/session/${sessionId}/end`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    console.log('✅ Backend session ended:', data);
+    return data;
+
+  } catch (error) {
+    console.error('❌ Error ending backend session:', error);
+    throw error;
+  }
+}
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+async function getPlatformInfo() {
+  return new Promise((resolve) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs.length > 0) {
+        const tab = tabs[0];
+        const url = new URL(tab.url);
+        resolve({
+          url: tab.url,
+          hostname: url.hostname,
+          platform: detectPlatform(url.hostname)
         });
-        
-        if (response.ok) {
-            console.log('Service Worker: ✅ Contexts sent to backend');
-        }
-    } catch (error) {
-        // Backend optional - silent fail
-    }
+      } else {
+        resolve({
+          url: '',
+          hostname: '',
+          platform: 'Unknown'
+        });
+      }
+    });
+  });
+}
+
+function detectPlatform(hostname) {
+  const platforms = {
+    'github.com': 'GitHub',
+    'leetcode.com': 'LeetCode',
+    'codesignal.com': 'CodeSignal',
+    'hackerrank.com': 'HackerRank',
+    'codechef.com': 'CodeChef',
+    'localhost': 'Local IDE'
+  };
+
+  for (const [domain, platform] of Object.entries(platforms)) {
+    if (hostname.includes(domain)) return platform;
+  }
+
+  return 'Other';
+}
+
+async function getUserId() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get('userId', (result) => {
+      resolve(result.userId || `user_${Date.now()}`);
+    });
+  });
 }
 
 // ========================================
@@ -434,4 +609,4 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
-console.log("CodeFlow AI: ✅ Service Worker ready");
+console.log("CodeFlow AI: ✅ Service Worker ready (Phase 1 + Phase 2 integrated)");

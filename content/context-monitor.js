@@ -26,6 +26,8 @@
             this.selectionObserver = null;
             this.lastFocusedElement = null;
 
+            this.codeExtractionInterval = null;
+
             console.log('[ContextMonitor] ✅ Initialized (passive mode - no detection yet)');
         }
 
@@ -346,12 +348,12 @@ Respond with JSON only:
                         const identity = JSON.parse(response.identity);
                         this.platformIdentity = identity;
                         this.saveToCache(cacheKey, identity, 7 * 24 * 60 * 60 * 1000);
-                        
+
                         // Update display after AI identification
                         if (this.isMonitoring) {
                             this.updateSidebarDisplay();
                         }
-                        
+
                         resolve(identity);
                     } catch (e) {
                         resolve(this.getFallbackIdentity());
@@ -412,6 +414,8 @@ Respond with JSON only:
             setTimeout(() => this.capturePageContext(), 500);
             this.setupListeners();
 
+            this.startAdvancedTrackers();
+
             // Show platform display on top left
             setTimeout(() => {
                 this.updateSidebarDisplay();
@@ -427,6 +431,59 @@ Respond with JSON only:
 
             console.log('[ContextMonitor] ✅ Monitoring active');
         }
+        // ========================================
+        // NEW METHOD: Start Advanced Trackers
+        // ========================================
+        startAdvancedTrackers() {
+            console.log('[ContextMonitor] 🚀 Starting advanced trackers...');
+
+            // Start Input Tracker
+            if (window.InputTracker && !window.InputTracker.getStatus().isTracking) {
+                window.InputTracker.start((inputData) => {
+                    console.log('[InputTracker] Data captured:', inputData);
+                    this.captureContext('input_tracking', inputData);
+                });
+                console.log('[ContextMonitor] ✅ Input Tracker started');
+            }
+
+            // Start Scroll Tracker
+            if (window.ScrollTracker && !window.ScrollTracker.getStatus().isTracking) {
+                window.ScrollTracker.start((scrollData) => {
+                    console.log('[ScrollTracker] Data captured:', scrollData);
+                    this.captureContext('scroll_tracking', scrollData);
+                });
+                console.log('[ContextMonitor] ✅ Scroll Tracker started');
+            }
+
+            // Extract code blocks periodically
+            if (window.CodeFlowDOMParser) {
+                this.codeExtractionInterval = setInterval(() => {
+                    const codeBlocks = window.CodeFlowDOMParser.extractCodeBlocks();
+                    if (codeBlocks.length > 0) {
+                        console.log('[DOMParser] Code blocks extracted:', codeBlocks.length);
+                        this.captureContext('code_blocks', codeBlocks);
+                    }
+                }, 10000); // Every 10 seconds
+                console.log('[ContextMonitor] ✅ Code extraction scheduled');
+            }
+
+            console.log('[ContextMonitor] ✅ All advanced trackers started');
+        }
+
+        // ========================================
+        // NEW METHOD: Helper to capture context
+        // ========================================
+        captureContext(type, data) {
+            const context = {
+                type: type,
+                data: data,
+                url: window.location.href,
+                platform: this.platform,
+                timestamp: Date.now()
+            };
+
+            this.addToBuffer(context);
+        }
 
         stop() {
             if (!this.isMonitoring) return;
@@ -436,6 +493,22 @@ Respond with JSON only:
 
             this.removeListeners();
             this.stopSelectionObserver();
+
+            // NEW: Stop Advanced Trackers
+            if (window.InputTracker) {
+                window.InputTracker.stop();
+                console.log('[ContextMonitor] ⏹️ Input Tracker stopped');
+            }
+
+            if (window.ScrollTracker) {
+                window.ScrollTracker.stop();
+                console.log('[ContextMonitor] ⏹️ Scroll Tracker stopped');
+            }
+
+            if (this.codeExtractionInterval) {
+                clearInterval(this.codeExtractionInterval);
+                console.log('[ContextMonitor] ⏹️ Code extraction stopped');
+            }
 
             if (this.contextInterval) clearInterval(this.contextInterval);
             this.flushBuffer(true);
@@ -613,7 +686,7 @@ Respond with JSON only:
 
         updateSidebarDisplay() {
             console.log('[ContextMonitor] 🎯 updateSidebarDisplay called');
-            
+
             let displayElement = document.getElementById('codeflow-platform-display');
 
             if (!displayElement) {
@@ -647,7 +720,7 @@ Respond with JSON only:
 
             const platformInfo = this.getPlatformInfo();
             console.log('[ContextMonitor] 📊 Platform info:', platformInfo);
-            
+
             if (platformInfo) {
                 displayElement.innerHTML = `
                     <span style="font-size: 18px;">${platformInfo.icon || '💻'}</span>

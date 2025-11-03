@@ -15,18 +15,18 @@
     this.init();
   };
 
-   AssistantSidebar.prototype.init = function () {
+  AssistantSidebar.prototype.init = function () {
     const self = this;
     this.createDashboard();
     this.setupEvents();
     this.setupGlobalShortcut();
     this.setupSelectionListener();
-    
+
     // Track scroll to move sidebar with page
     let ticking = false;
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', function () {
       if (!ticking) {
-        window.requestAnimationFrame(function() {
+        window.requestAnimationFrame(function () {
           self.updateSidebarPosition();
           ticking = false;
         });
@@ -59,7 +59,7 @@
     // HEADER BAR - DYNAMIC (Hidden until monitoring starts)
     const topBar = document.createElement("div");
     topBar.id = "topBar";
-   topBar.style.cssText = `
+    topBar.style.cssText = `
   height: 0px;
   overflow: hidden;
   opacity: 0;
@@ -164,7 +164,7 @@ background: transparent;
     // CHAT BOX - ULTRA TRANSPARENT, NO OVERLAP
     const chatContainer = document.createElement("div");
     chatContainer.id = "chatContainer";
-   chatContainer.style.cssText = `
+    chatContainer.style.cssText = `
   position: absolute;
   top: 90px;
   right: 32px;
@@ -206,7 +206,7 @@ Line 171:   border: 1px solid rgba(0, 0, 0, 0.08);
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 `;
 
- 
+
 
     chatContainer.innerHTML = `
   <!-- Header - ULTRA TRANSPARENT -->
@@ -310,78 +310,108 @@ Line 171:   border: 1px solid rgba(0, 0, 0, 0.08);
     </div>
   </div>
 
-  <!-- Input Area - ULTRA TRANSPARENT -->
-  <div style="
-    padding: 20px 24px;
+ <!-- Input Area - PROPERLY SIZED -->
+<div style="
+  padding: 16px 20px;
   background: transparent;
- 
-    border-top: 1px solid rgba(255,255,255,0.02);
+  border-top: 1px solid rgba(255,255,255,0.02);
+">
+  <div id="filePreview" style="
+    display: flex; 
+    gap: 8px; 
+    flex-wrap: wrap; 
+    margin-bottom: 12px; 
+    min-height: 0; 
+    transition: all 0.3s;
+  "></div>
+
+  <div id="inputWrapper" style="
+    display: flex; 
+    gap: 10px; 
+    align-items: flex-end;
   ">
-    <div id="filePreview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; min-height: 0; transition: all 0.3s;"></div>
-
-    <div id="inputWrapper" style="display: flex; gap: 12px; align-items: flex-end;">
-      <div style="flex: 1;">
-       <textarea id="chatInput" 
-  placeholder="Ask anything..."
-  style="
-    flex: 1;
-    background: linear-gradient(135deg, rgba(20, 25, 35, 0.95), rgba(25, 30, 40, 0.95));
-
-        
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 14px;
-            font-family: inherit;
-          
-            resize: none;
-            max-height: 120px;
-            transition: all 0.2s;
-          "></textarea>
-      </div>
-      <label for="fileInput" style="
-        cursor: pointer;
-        width: 44px;
-        height: 44px;
-        background: rgba(255,255,255,0.06);
-    
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        transition: all 0.2s;
-      ">📎</label>
-      <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.pdf,.doc,.docx,.txt,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.html,.css,.json">
-      <button id="sendBtn" style="
-        width: 44px;
-        height: 44px;
-        background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%);
-        border: none;
-        border-radius: 12px;
-        color: white;
-        font-size: 20px;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 4px 12px rgba(102,126,234,0.4);
-      ">↑</button>
+    <div style="flex: 1; min-width: 0;">
+      <textarea id="chatInput" 
+        placeholder="Ask anything..."
+        style="
+          width: 100%;
+          min-height: 80px;
+          max-height: 150px;
+          background: linear-gradient(135deg, rgba(20, 25, 35, 0.95), rgba(25, 30, 40, 0.95));
+          border: 2px solid rgba(255,255,255,0.15);
+          border-radius: 12px;
+          padding: 14px 16px;
+          font-size: 14px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          color: #ffffff;
+          resize: vertical;
+          transition: all 0.2s;
+          line-height: 1.5;
+          box-sizing: border-box;
+        "
+      ></textarea>
     </div>
-    <div style="
-      font-size: 11px;
-      color: rgba(255,255,255,1);
-      text-align: center;
-      margin-top: 8px;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    ">Press Enter to send • Shift+Enter for new line</div>
+    
+    <label for="fileInput" style="
+      cursor: pointer;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    " onmouseover="this.style.background='rgba(255,255,255,0.1)'" 
+       onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+      📎
+    </label>
+    
+    <input type="file" id="fileInput" style="display:none;" 
+      multiple 
+      accept="image/*,.pdf,.doc,.docx,.txt,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.html,.css,.json">
+    
+    <button id="sendBtn" style="
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      background: linear-gradient(135deg, rgba(102,126,234,0.9) 0%, rgba(118,75,162,0.9) 100%);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+      flex-shrink: 0;
+    " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 16px rgba(102,126,234,0.6)'" 
+       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)'">
+      ↑
+    </button>
   </div>
+  
+  <div style="
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    margin-top: 10px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  ">
+    Press Enter to send • Shift+Enter for new line
+  </div>
+</div>
+
 `;
 
 
-// ✅ NOW add the specular highlight AFTER the HTML
-const specularHighlight = document.createElement('div');
-specularHighlight.id = 'specularHighlight';
-specularHighlight.style.cssText = `
+    // ✅ NOW add the specular highlight AFTER the HTML
+    const specularHighlight = document.createElement('div');
+    specularHighlight.id = 'specularHighlight';
+    specularHighlight.style.cssText = `
   position: absolute;
   top: 0;
   left: 0;
@@ -400,16 +430,16 @@ specularHighlight.style.cssText = `
   mix-blend-mode: overlay;
   z-index: 1;
 `;
-chatContainer.appendChild(specularHighlight);
+    chatContainer.appendChild(specularHighlight);
 
-// Then continue with the rest
-this.container.appendChild(chatContainer);
+    // Then continue with the rest
+    this.container.appendChild(chatContainer);
 
     // PERMANENT CLOSE BUTTON - Always visible
     const permanentCloseBtn = document.createElement("button");
     permanentCloseBtn.id = "permanentCloseBtn";
     permanentCloseBtn.innerHTML = "×";
-permanentCloseBtn.style.cssText = `
+    permanentCloseBtn.style.cssText = `
   position: absolute;
   top: 20px;
   right: 20px;
@@ -628,7 +658,7 @@ permanentCloseBtn.style.cssText = `
       }
 
       /* ============================================
-         INPUT TEXT COLOR FIX
+          INPUT TEXT COLOR FIX
          ============================================ */
       
       #chatInput {
@@ -955,63 +985,63 @@ permanentCloseBtn.style.cssText = `
 
     this.updateQuickActionTheme(isDark);
     // Update permanent close button theme
-     const permCloseBtn = this.container.querySelector('#permanentCloseBtn');
-if (permCloseBtn) {
-  permCloseBtn.style.background = isDark 
-    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.20) 100%)' 
-    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)';
-  
-  permCloseBtn.style.backdropFilter = isDark
-    ? 'blur(45px) saturate(180%) brightness(1.25)'
-    : 'blur(40px) saturate(180%) brightness(1.2)';
-  
-  permCloseBtn.style.webkitBackdropFilter = isDark
-    ? 'blur(45px) saturate(180%) brightness(1.25)'
-    : 'blur(40px) saturate(180%) brightness(1.2)';
-  
-  permCloseBtn.style.border = isDark 
-    ? '1.5px solid rgba(255, 255, 255, 0.35)' 
-    : '1.5px solid rgba(255, 255, 255, 0.35)';
-  
-  permCloseBtn.style.boxShadow = isDark
-    ? `
+    const permCloseBtn = this.container.querySelector('#permanentCloseBtn');
+    if (permCloseBtn) {
+      permCloseBtn.style.background = isDark
+        ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.20) 100%)'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)';
+
+      permCloseBtn.style.backdropFilter = isDark
+        ? 'blur(45px) saturate(180%) brightness(1.25)'
+        : 'blur(40px) saturate(180%) brightness(1.2)';
+
+      permCloseBtn.style.webkitBackdropFilter = isDark
+        ? 'blur(45px) saturate(180%) brightness(1.25)'
+        : 'blur(40px) saturate(180%) brightness(1.2)';
+
+      permCloseBtn.style.border = isDark
+        ? '1.5px solid rgba(255, 255, 255, 0.35)'
+        : '1.5px solid rgba(255, 255, 255, 0.35)';
+
+      permCloseBtn.style.boxShadow = isDark
+        ? `
       0 12px 40px rgba(0, 0, 0, 0.4),
       0 0 0 1px rgba(255, 255, 255, 0.25),
       inset 0 2px 2px 0 rgba(255, 255, 255, 0.6),
       0 0 40px rgba(255, 255, 255, 0.25)
     `
-    : `
+        : `
       0 12px 40px rgba(0, 0, 0, 0.2),
       0 0 0 1px rgba(255, 255, 255, 0.2),
       inset 0 2px 2px 0 rgba(255, 255, 255, 0.5),
       inset 0 -1px 1px 0 rgba(0, 0, 0, 0.15),
       0 0 30px rgba(255, 255, 255, 0.2)
     `;
-}
+    }
 
   };
 
-    // ADVANCED: Content-Aware Color Adaptation
-  AssistantSidebar.prototype.startColorAdaptation = function() {
+  // ADVANCED: Content-Aware Color Adaptation
+  AssistantSidebar.prototype.startColorAdaptation = function () {
     const self = this;
-    
+
     function sampleBackgroundColor() {
       const chatContainer = self.container.querySelector('#chatContainer');
       if (!chatContainer) return null;
-      
+
       const bodyBg = window.getComputedStyle(document.body).backgroundColor;
       const rgb = bodyBg.match(/\d+/g);
-      
+
       if (rgb && rgb.length >= 3) {
         const r = parseInt(rgb[0]);
         const g = parseInt(rgb[1]);
         const b = parseInt(rgb[2]);
-        
+
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        
+
         const max = Math.max(r, g, b);
         let hue = 0;
-        
+
         if (max === r) {
           hue = ((g - b) / (max - Math.min(r, g, b))) * 60;
         } else if (max === g) {
@@ -1019,9 +1049,9 @@ if (permCloseBtn) {
         } else {
           hue = (4 + (r - g) / (max - Math.min(r, g, b))) * 60;
         }
-        
+
         if (hue < 0) hue += 360;
-        
+
         return {
           r, g, b,
           brightness,
@@ -1029,19 +1059,19 @@ if (permCloseBtn) {
           isDark: brightness < 128
         };
       }
-      
+
       return null;
     }
-    
+
     function applyColorAdaptation() {
       const colorData = sampleBackgroundColor();
       if (!colorData) return;
-      
+
       const chatContainer = self.container.querySelector('#chatContainer');
       if (!chatContainer) return;
-      
+
       let tintColor;
-      
+
       if (colorData.isDark) {
         const tintOpacity = 0.15;
         tintColor = `rgba(${Math.min(255, colorData.r + 50)}, ${Math.min(255, colorData.g + 50)}, ${Math.min(255, colorData.b + 50)}, ${tintOpacity})`;
@@ -1049,7 +1079,7 @@ if (permCloseBtn) {
         const tintOpacity = 0.10;
         tintColor = `rgba(${Math.max(0, colorData.r - 30)}, ${Math.max(0, colorData.g - 30)}, ${Math.max(0, colorData.b - 30)}, ${tintOpacity})`;
       }
-      
+
       chatContainer.style.background = `
         linear-gradient(
           135deg,
@@ -1058,31 +1088,31 @@ if (permCloseBtn) {
           ${tintColor} 100%
         )
       `;
-      
+
       const hueRotation = (colorData.hue / 360) * 10;
       chatContainer.style.filter = `hue-rotate(${hueRotation}deg)`;
-      
+
       chatContainer.classList.add('color-adaptive');
     }
-    
+
     applyColorAdaptation();
-    
+
     let adaptationTimeout;
     window.addEventListener('scroll', () => {
       clearTimeout(adaptationTimeout);
       adaptationTimeout = setTimeout(applyColorAdaptation, 300);
     });
-    
+
     window.addEventListener('resize', () => {
       clearTimeout(adaptationTimeout);
       adaptationTimeout = setTimeout(applyColorAdaptation, 300);
     });
-    
+
     const observer = new MutationObserver(() => {
       clearTimeout(adaptationTimeout);
       adaptationTimeout = setTimeout(applyColorAdaptation, 500);
     });
-    
+
     observer.observe(document.body, {
       attributes: true,
       attributeFilter: ['style', 'class']
@@ -1171,18 +1201,18 @@ if (permCloseBtn) {
       } else {
         self.startMonitoring();
       }
-          // ADVANCED: Dynamic Specular Highlight Tracking
-    const chatContainer = this.container.querySelector('#chatContainer');
-    const specularHighlight = chatContainer.querySelector('#specularHighlight');
-    
-    if (chatContainer && specularHighlight) {
-      chatContainer.addEventListener('mousemove', (e) => {
-        const rect = chatContainer.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        
-        // Update specular highlight position
-        specularHighlight.style.background = `
+      // ADVANCED: Dynamic Specular Highlight Tracking
+      const chatContainer = this.container.querySelector('#chatContainer');
+      const specularHighlight = chatContainer.querySelector('#specularHighlight');
+
+      if (chatContainer && specularHighlight) {
+        chatContainer.addEventListener('mousemove', (e) => {
+          const rect = chatContainer.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+          // Update specular highlight position
+          specularHighlight.style.background = `
           radial-gradient(
             circle at ${x}% ${y}%,
             rgba(255, 255, 255, 0.3) 0%,
@@ -1191,13 +1221,13 @@ if (permCloseBtn) {
             transparent 60%
           )
         `;
-        specularHighlight.style.opacity = '1';
-      });
-      
-      chatContainer.addEventListener('mouseleave', () => {
-        specularHighlight.style.opacity = '0';
-      });
-    }
+          specularHighlight.style.opacity = '1';
+        });
+
+        chatContainer.addEventListener('mouseleave', () => {
+          specularHighlight.style.opacity = '0';
+        });
+      }
 
     });
   };
@@ -1213,284 +1243,330 @@ if (permCloseBtn) {
     });
   };
 
-    // NEW FUNCTION: Makes sidebar follow scroll position
-  AssistantSidebar.prototype.updateSidebarPosition = function() {
+  // NEW FUNCTION: Makes sidebar follow scroll position
+  AssistantSidebar.prototype.updateSidebarPosition = function () {
     const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-    
+
     if (this.container) {
       // Move the container down as user scrolls
       this.container.style.transform = `translateY(${scrollY}px)`;
     }
   };
 
-  
+
 
   // NEW: Show selected text preview (Merlin-style)
-  AssistantSidebar.prototype.showSelectedTextPreview = function (text, platformInfo, selectionContext) {
-    const self = this;
+AssistantSidebar.prototype.showSelectedTextPreview = function(text, platformInfo, selectionContext) {
+  const self = this;
+  
+  // Find the chatContainer (the main sidebar panel)
+  const chatContainer = this.container.querySelector('#chatContainer');
+  if (!chatContainer) {
+    console.error('Chat container not found');
+    return;
+  }
+  
+  // Remove existing preview
+  const existingPreview = document.querySelector('#selectedTextPreview');
+  if (existingPreview) {
+    existingPreview.remove();
+  }
 
-    // Remove existing preview
-    const existingPreview = this.container.querySelector('#selectedTextPreview');
-    if (existingPreview) existingPreview.remove();
+  const isCodeBlock = selectionContext?.isCodeBlock;
+  
+  // Calculate preview dimensions
+  const lines = text.split('\n');
+  const totalLines = lines.length;
+  const isLongText = (totalLines > 3) || (text.length > 300);
 
-    const isCodeBlock = selectionContext?.isCodeBlock;
-
-    // Calculate preview dimensions
-    const lines = text.split('\n');
-    const totalLines = lines.length;
-    const isLongText = totalLines > 3 || text.length > 300;
-
-    // Create preview container
-    const preview = document.createElement('div');
-    preview.id = 'selectedTextPreview';
-    preview.style.cssText = `
-      padding: 12px 16px;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-      border: 2px solid rgba(102, 126, 234, 0.4);
-      border-radius: 12px;
-      margin-bottom: 12px;
-      animation: slideUp 0.3s ease-out;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      position: relative;
-    `;
-
-    // Close button (X) - top right corner
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = '×';
-    closeButton.style.cssText = `
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: rgba(239, 68, 68, 0.8);
-      border: none;
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      z-index: 10;
-      line-height: 1;
-    `;
-
-    closeButton.addEventListener('mouseenter', () => {
-      closeButton.style.background = 'rgba(239, 68, 68, 1)';
-      closeButton.style.transform = 'scale(1.1)';
-    });
-
-    closeButton.addEventListener('mouseleave', () => {
-      closeButton.style.background = 'rgba(239, 68, 68, 0.8)';
-      closeButton.style.transform = 'scale(1)';
-    });
-
-    closeButton.addEventListener('click', () => {
-      preview.style.animation = 'fadeOut 0.3s ease-out';
-      setTimeout(() => preview.remove(), 300);
-    });
-
-    preview.appendChild(closeButton);
-
-    // Header with platform info
-    const header = document.createElement('div');
-    header.style.cssText = `
-
+  // Create FLOATING preview INSIDE sidebar
+  const preview = document.createElement('div');
+  preview.id = 'selectedTextPreview';
+  preview.style.cssText = `
+    position: absolute;
+    top: 140px;
+    left: 20px;
+    right: 20px;
+    width: calc(100% - 40px);
+    max-height: 420px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(30, 35, 50, 0.98) 0%, rgba(25, 30, 45, 0.98) 100%);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 2px solid rgba(102, 126, 234, 0.5);
+    border-radius: 16px;
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    z-index: 999999;
+    animation: popupSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
     display: flex;
-align-items: center;
-gap: 8px;
-margin-bottom: 10px;
-padding-right: 30px;
-`;
+    flex-direction: column;
+  `;
 
-    header.innerHTML = `
-<span style="font-size: 16px;">${platformInfo?.icon || '📝'}</span>
-<div style="flex: 1;">
-  <div style="font-weight: 600; font-size: 12px; color: #a5b4fc;">
-    Selected${isCodeBlock ? ' Code' : ' Text'} • Context Captured
-  </div>
-  <div style="font-size: 10px; color: rgba(255,255,255,1);">
-    from ${platformInfo?.hostname || 'page'} • ${totalLines} line${totalLines > 1 ? 's' : ''} • ${text.length} chars
-  </div>
-</div>
-<div style="
-  padding: 4px 10px;
-  background: rgba(76, 175, 80, 0.2);
-  border: 1px solid rgba(76, 175, 80, 0.4);
-  border-radius: 12px;
-  font-size: 10px;
-  color: #4ade80;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-">
-  <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block;"></span>
-  Active
-</div>
-`;
-
-    // Content container with collapse/expand
-    const contentContainer = document.createElement('div');
-    contentContainer.id = 'previewContent';
-
-    // Preview text (collapsed by default if long)
-    const previewText = document.createElement('div');
-    previewText.id = 'previewTextContent';
-        // Calculate dynamic height based on text length
-    const estimatedHeight = Math.min(
-      totalLines * 24 + 40,  // 24px per line + 40px padding
-      window.innerHeight * 0.6  // Max 60% of screen height
-    );
-    
-previewText.style.cssText = `
-  font-family: ${isCodeBlock ? "'Courier New', 'Consolas', monospace" : 'inherit'};
-  font-size: ${isCodeBlock ? '11px' : '12px'};
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 20px 20px 300px 20px;
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 1);
-  line-height: 1.6;
-  max-height: 70vh;
-  overflow-y: scroll;
-  overflow-x: hidden;
-`;
-
-
-    previewText.textContent = text;
-
-    // Add fade gradient for collapsed state
-  //   if (isLongText) {
-  //     const fadeOverlay = document.createElement('div');
-  //     fadeOverlay.id = 'fadeOverlay';
-  //     fadeOverlay.style.cssText = `
-  //   position: absolute;
-  //   bottom: 0;
-  //   left: 0;
-  //   right: 0;
-  //   height: 40px;
-  //   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
-  //   pointer-events: none;
-  //   opacity: 1;
-  //   transition: opacity 0.3s ease;
-  // `;
-  //     previewText.style.position = 'relative';
-  //     previewText.appendChild(fadeOverlay);
-      
-  //     // Hide fade overlay when user scrolls near bottom
-  //     previewText.addEventListener('scroll', function() {
-  //       const isNearBottom = previewText.scrollHeight - previewText.scrollTop <= previewText.clientHeight + 50;
-  //       fadeOverlay.style.opacity = isNearBottom ? '0' : '1';
-  //     });
-  //   }
-
-    contentContainer.appendChild(previewText);
-
-    // Expand/Collapse button (only for long text)
-    if (isLongText) {
-      const expandButton = document.createElement('button');
-      expandButton.id = 'expandButton';
-      expandButton.style.cssText = `
-    width: 100%;
-    padding: 6px 12px;
-    margin-top: 8px;
-    background: rgba(40, 42, 58, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    color: rgba(255, 255, 255, 1);
-    font-size: 11px;
+  // Close button X
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = '×';
+  closeButton.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.95);
+    border: none;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    transition: all 0.2s;
+    z-index: 10;
+    line-height: 1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  `;
+  
+  closeButton.addEventListener('mouseenter', () => {
+    closeButton.style.background = 'rgba(220, 38, 38, 1)';
+    closeButton.style.transform = 'scale(1.15) rotate(90deg)';
+  });
+  
+  closeButton.addEventListener('mouseleave', () => {
+    closeButton.style.background = 'rgba(239, 68, 68, 0.95)';
+    closeButton.style.transform = 'scale(1) rotate(0deg)';
+  });
+  
+  closeButton.addEventListener('click', () => {
+    preview.style.animation = 'popupSlideOut 0.3s ease-out';
+    setTimeout(() => preview.remove(), 300);
+  });
+  
+  preview.appendChild(closeButton);
+
+  // Header
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-right: 40px;
+  `;
+  
+  header.innerHTML = `
+    <span style="font-size: 18px;">${platformInfo?.icon || '📄'}</span>
+    <div style="flex: 1;">
+      <div style="font-weight: 600; font-size: 13px; color: #a5b4fc;">Selected ${isCodeBlock ? 'Code' : 'Text'} • Context Captured</div>
+      <div style="font-size: 10px; color: rgba(255,255,255,0.7);">from ${platformInfo?.hostname || 'page'} • ${totalLines} line${totalLines !== 1 ? 's' : ''} • ${text.length} chars</div>
+    </div>
+    <div style="
+      padding: 5px 12px;
+      background: rgba(76, 175, 80, 0.25);
+      border: 1px solid rgba(76, 175, 80, 0.5);
+      border-radius: 14px;
+      font-size: 10px;
+      color: #4ade80;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 0 12px rgba(76, 175, 80, 0.2);
+    ">
+      <span style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; display: inline-block; animation: pulse 2s infinite;"></span>
+      Active
+    </div>
+  `;
+  
+  preview.appendChild(header);
+
+  // Content scrollable area
+  const contentContainer = document.createElement('div');
+  contentContainer.style.cssText = `
+    flex: 1;
+    overflow-y: auto;
+    max-height: 300px;
   `;
 
-      expandButton.innerHTML = `
-    <span style="font-size: 14px;">▼</span>
-    <span>Show full text (${totalLines} lines)</span>
+  // Preview text
+  const previewText = document.createElement('div');
+  previewText.id = 'previewTextContent';
+  previewText.style.cssText = `
+    font-family: ${isCodeBlock ? 'Courier New, Consolas, monospace' : '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'};
+    font-size: ${isCodeBlock ? '11px' : '12px'};
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.6;
+    max-height: ${isLongText ? '130px' : 'auto'};
+    overflow-y: ${isLongText ? 'hidden' : 'auto'};
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
   `;
+  
+  previewText.textContent = text;
 
-      let isExpanded = false;
+  // Fade overlay
+  if (isLongText) {
+    const fadeOverlay = document.createElement('div');
+    fadeOverlay.id = 'fadeOverlay';
+    fadeOverlay.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8));
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    `;
+    previewText.appendChild(fadeOverlay);
+  }
 
-      expandButton.addEventListener('click', () => {
-        isExpanded = !isExpanded;
-        const fadeOverlay = previewText.querySelector('#fadeOverlay');
+  contentContainer.appendChild(previewText);
 
-        if (isExpanded) {
-          // Expand
-          const fullHeight = Math.min(previewText.scrollHeight, 400);
-          previewText.style.maxHeight = fullHeight + 'px';
-          previewText.style.overflowY = 'auto';
-          expandButton.innerHTML = `
-        <span style="font-size: 14px; transform: rotate(180deg); display: inline-block;">▼</span>
-        <span>Show less</span>
-      `;
-          if (fadeOverlay) fadeOverlay.style.display = 'none';
-        } else {
-          // Collapse
-          previewText.style.maxHeight = '80px';
-          previewText.style.overflowY = 'hidden';
-          expandButton.innerHTML = `
-        <span style="font-size: 14px;">▼</span>
-        <span>Show full text (${totalLines} lines)</span>
-      `;
-          if (fadeOverlay) fadeOverlay.style.display = 'block';
-        }
-      });
+  // Expand/Collapse button
+  if (isLongText) {
+    const expandButton = document.createElement('button');
+    expandButton.style.cssText = `
+      width: 100%;
+      padding: 10px 14px;
+      margin-top: 10px;
+      background: rgba(102, 126, 234, 0.15);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    `;
 
-      expandButton.addEventListener('mouseenter', () => {
-        expandButton.style.background = 'rgba(255,255,255,0.15)';
-      });
+    expandButton.innerHTML = `
+      <span style="font-size: 14px;">▼</span>
+      <span>Show full text (${totalLines} lines)</span>
+    `;
 
-      expandButton.addEventListener('mouseleave', () => {
-        expandButton.style.background = 'rgba(255,255,255,0.1)';
-      });
+    let isExpanded = false;
 
-      contentContainer.appendChild(expandButton);
-    }
+    expandButton.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      const fadeOverlay = previewText.querySelector('#fadeOverlay');
 
-    // Info footer
-    const footer = document.createElement('div');
-    footer.style.cssText = `
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 1);
-`;
-
-    footer.innerHTML = `
-  <span style="font-size: 12px;">ℹ️</span>
-  <span>This context is automatically available to AI • Ask anything about it</span>
-`;
-
-    // Assemble preview
-    preview.appendChild(header);
-    preview.appendChild(contentContainer);
-    preview.appendChild(footer);
-
-    // Insert into DOM
-    const inputWrapper = this.container.querySelector('#inputWrapper');
-    inputWrapper.parentElement.insertBefore(preview, inputWrapper);
-
-    // Auto-remove after 60 seconds
-    setTimeout(() => {
-      if (preview.parentElement) {
-        preview.style.animation = 'fadeOut 0.3s ease-out';
-        setTimeout(() => preview.remove(), 300);
+      if (isExpanded) {
+        previewText.style.maxHeight = '350px';
+        previewText.style.overflowY = 'auto';
+        expandButton.innerHTML = `
+          <span style="font-size: 14px; transform: rotate(180deg); display: inline-block;">▼</span>
+          <span>Show less</span>
+        `;
+        if (fadeOverlay) fadeOverlay.style.opacity = '0';
+      } else {
+        previewText.style.maxHeight = '130px';
+        previewText.style.overflowY = 'hidden';
+        expandButton.innerHTML = `
+          <span style="font-size: 14px;">▼</span>
+          <span>Show full text (${totalLines} lines)</span>
+        `;
+        if (fadeOverlay) fadeOverlay.style.opacity = '1';
+        previewText.scrollTop = 0;
       }
-    }, 60000);
-  };
+    });
+
+    expandButton.addEventListener('mouseenter', () => {
+      expandButton.style.background = 'rgba(102, 126, 234, 0.25)';
+      expandButton.style.borderColor = 'rgba(102, 126, 234, 0.5)';
+    });
+
+    expandButton.addEventListener('mouseleave', () => {
+      expandButton.style.background = 'rgba(102, 126, 234, 0.15)';
+      expandButton.style.borderColor = 'rgba(102, 126, 234, 0.3)';
+    });
+
+    contentContainer.appendChild(expandButton);
+  }
+
+  preview.appendChild(contentContainer);
+
+  // Info footer
+  const footer = document.createElement('div');
+  footer.style.cssText = `
+    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+  `;
+  
+  footer.innerHTML = `
+    <span style="font-size: 14px;">💡</span>
+    <span>This context is automatically available to AI • Ask anything about it</span>
+  `;
+  
+  preview.appendChild(footer);
+
+  // Animation styles
+  if (!document.querySelector('#selectedTextAnimations')) {
+    const style = document.createElement('style');
+    style.id = 'selectedTextAnimations';
+    style.textContent = `
+      @keyframes popupSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-30px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      @keyframes popupSlideOut {
+        from {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-30px) scale(0.95);
+        }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ✅ CRITICAL: Append to chatContainer (inside sidebar)
+  // This ensures it's ABOVE the content but INSIDE the sidebar
+  chatContainer.appendChild(preview);
+
+  // Auto-remove after 60 seconds
+  setTimeout(() => {
+    if (preview.parentElement) {
+      preview.style.animation = 'popupSlideOut 0.3s ease-out';
+      setTimeout(() => preview.remove(), 300);
+    }
+  }, 60000);
+};
+
+
 
   AssistantSidebar.prototype.startMonitoring = function () {
     const self = this;

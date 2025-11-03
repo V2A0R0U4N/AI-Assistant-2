@@ -1,16 +1,19 @@
+/* CodeFlow AI Backend Server - Phase 2 */
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const contextRoutes = require('./routes/contextRoutes');
+//const contextRoutes = require('./routes/contextRoutes');
+const trackingRoutes = require('./utils/backend/routes/trackingRoutes');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 // ========================================
 // MIDDLEWARE
 // ========================================
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -38,7 +41,7 @@ mongoose.connect(MONGODB_URI, {
 
 // MongoDB connection event handlers
 mongoose.connection.on('disconnected', () => {
-    console.log('⚠️  MongoDB Disconnected');
+    console.log('⚠️ MongoDB Disconnected');
 });
 
 mongoose.connection.on('reconnected', () => {
@@ -48,23 +51,15 @@ mongoose.connection.on('reconnected', () => {
 // ========================================
 // ROUTES
 // ========================================
-app.use('/api', contextRoutes);
+//app.use('/api', contextRoutes);
+app.use('/api/tracking', trackingRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
     res.json({
         message: 'AI Assistant Backend API',
         version: '2.0.0',
-        status: 'running',
-        endpoints: {
-            health: '/health',
-            context: '/api/context',
-            contextBatch: '/api/context/batch',
-            contextHistory: '/api/context/history',
-            sessionSummary: '/api/context/session/:sessionId',
-            statistics: '/api/context/statistics',
-            cleanup: '/api/context/cleanup'
-        }
+        status: 'running'
     });
 });
 
@@ -73,8 +68,7 @@ app.get('/health', (req, res) => {
     res.json({
         status: 'healthy',
         mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -96,22 +90,19 @@ app.use((err, req, res, next) => {
     console.error('Server Error:', err);
     res.status(500).json({
         success: false,
-        error: err.message || 'Internal server error',
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        error: err.message || 'Internal server error'
     });
 });
 
 // ========================================
 // SERVER STARTUP
 // ========================================
-const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
     console.log('');
     console.log('🚀 ==========================================');
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🚀 API Base URL: http://localhost:${PORT}/api`);
+    console.log('🚀 Tracking API: http://localhost:${PORT}/api/tracking');
     console.log('🚀 ==========================================');
     console.log('');
 });
