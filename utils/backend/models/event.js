@@ -1,4 +1,3 @@
-/* Event Model - Stores individual tracking events */
 const mongoose = require('mongoose');
 
 const eventSchema = new mongoose.Schema({
@@ -11,7 +10,7 @@ const eventSchema = new mongoose.Schema({
   // Event classification
   type: {
     type: String,
-    enum: ['input', 'scroll', 'code_blocks', 'selection', 'deletion', 'paste', 'other'],
+    enum: ['input', 'scroll', 'code_blocks', 'selection', 'deletion', 'paste', 'click', 'page_context', 'other'],
     required: true,
     index: true
   },
@@ -23,49 +22,19 @@ const eventSchema = new mongoose.Schema({
     index: true
   },
   
-  // Event data (flexible)
+  // Event data (flexible - stores ANY event data)
   data: mongoose.Schema.Types.Mixed,
   
-  // Context
+  // Context info
   platform: String,
   url: String,
   hostname: String,
   
-  // Detailed tracking for input events
-  inputData: {
-    eventType: String,
-    element: String,
-    value: String,
-    valueLength: Number,
-    inputType: String
-  },
-  
-  // Detailed tracking for scroll events
-  scrollData: {
-    depth: Number,
-    maxDepth: Number,
-    scrollRate: Number,
-    behavior: String,
-    visibleElements: Array
-  },
-  
-  // Detailed tracking for code blocks
-  codeData: {
-    language: String,
-    content: String,
-    lines: Number,
-    characters: Number,
-    location: String
-  },
-  
-  // Selection data
-  selectedText: String,
-  textLength: Number,
-  
   // Processing flags
   processed: {
     type: Boolean,
-    default: false
+    default: false,
+    index: true
   },
   analyzed: {
     type: Boolean,
@@ -75,9 +44,13 @@ const eventSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create indexes
+// Compound indexes for efficient queries
 eventSchema.index({ sessionId: 1, timestamp: -1 });
+eventSchema.index({ sessionId: 1, type: 1 });
 eventSchema.index({ type: 1, timestamp: -1 });
 eventSchema.index({ platform: 1, timestamp: -1 });
+
+// TTL index - auto-delete events after 30 days
+eventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 2592000 });
 
 module.exports = mongoose.model('Event', eventSchema);

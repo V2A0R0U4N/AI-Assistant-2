@@ -1,242 +1,213 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
+const Session = require('../models/session');
+const Event = require('../models/event');
 
 // ========================================
-// SCHEMAS
+// SESSION ENDPOINTS
 // ========================================
 
-// Session Schema
-const sessionSchema = new mongoose.Schema({
-  sessionId: { type: String, required: true, unique: true },
-  platform: String,
-  url: String,
-  hostname: String,
-  userId: String,
-  startTime: { type: Date, default: Date.now },
-  endTime: Date,
-  status: { type: String, enum: ['active', 'ended'], default: 'active' },
-  totalEvents: { type: Number, default: 0 },
-  totalContexts: { type: Number, default: 0 }
-});
+// Start session
+router.post('/session/start', async (req, res) => {
+    try {
+        const { sessionId, userId, platform, url, hostname, startTime } = req.body;
 
-// Event Schema
-const eventSchema = new mongoose.Schema({
-  sessionId: String,
-  type: String,
-  data: mongoose.Schema.Types.Mixed,
-  platform: String,
-  url: String,
-  hostname: String,
-  timestamp: { type: Date, default: Date.now }
-});
-
-const Session = mongoose.model('sessions', sessionSchema);
-const Event = mongoose.model('events', eventSchema);
-
-// ========================================
-// ENDPOINTS
-// ========================================
-
-// Health check
-router.get('/health', (req, res) => {
-  res.json({ 
-    status: 'Tracking API running',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Create session
-router.post('/session/create', async (req, res) => {
-  try {
-    const { sessionId, platform, url, hostname, userId } = req.body;
-    
-    console.log('✅ Creating session:', sessionId);
-    
-    const session = new Session({
-      sessionId,
-      platform,
-      url,
-      hostname,
-      userId,
-      startTime: new Date()
-    });
-    
-    await session.save();
-    
-    res.json({
-      success: true,
-      message: 'Session created',
-      sessionId: sessionId
-    });
-    
-  } catch (error) {
-    console.error('❌ Error creating session:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Store events
-router.post('/events', async (req, res) => {
-  try {
-    const { sessionId, events, platform, url, hostname, timestamp } = req.body;
-    
-    console.log(`📤 Receiving ${events.length} events for session:`, sessionId);
-    
-    // Insert all events
-    const insertedEvents = await Event.insertMany(
-      events.map(event => ({
-        sessionId,
-        type: event.type,
-        data: event.data || event,
-        platform,
-        url,
-        hostname,
-        timestamp: event.timestamp || timestamp || new Date()
-      }))
-    );
-    
-    // Update session stats
-    await Session.findOneAndUpdate(
-      { sessionId },
-      { 
-        $inc: { 
-          totalEvents: events.length,
-          totalContexts: events.filter(e => e.type === 'context' || e.type === 'page_context').length
+        // Check if exists
+        let session = await Session.findOne({ sessionId });
+        if (session) {
+            console.log('⚠️ Session exists:', sessionId);
+            return res.json({ success: true, session, existed: true });
         }
-      },
-      { new: true }
-    );
-    
-    console.log(`✅ Stored ${insertedEvents.length} events`);
-    
-    res.json({
-      success: true,
-      message: 'Events stored',
-      eventsStored: insertedEvents.length,
-      sessionStats: {
-        sessionId,
-        eventsCount: insertedEvents.length
-      }
-    });
-    
-  } catch (error) {
-    console.error('❌ Error storing events:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+
+        // Create new
+        session = new Session({
+            sessionId,
+            userId: userId || 'anonymous',
+            platform: platform || 'Other',
+            url,
+            hostname,
+            startTime: startTime || new Date(),
+            status: 'active'
+        });
+
+        await session.save();
+        console.log('✅ Session created:', sessionId);
+
+        res.status(201).json({ success: true, session });
+
+    } catch (error) {
+        console.error('❌ Session start error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Update session
+router.post('/session/update', async (req, res) => {
+    try {
+        const { sessionId, url, hostname, platform, timestamp } = req.body;
+
+        const session = await Session.findOneAndUpdate(
+            { sessionId },
+            {
+                $set: {
+                    url,
+                    hostname,
+                    platform: platform || 'Other',
+                    updatedAt: timestamp || new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!session) {
+            return res.status(404).json({ success: false, error: 'Session not found' });
+        }
+
+        console.log('🔄 Session updated:', sessionId);
+        res.json({ success: true, session });
+
+    } catch (error) {
+        console.error('❌ Session update error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // End session
-router.post('/session/:sessionId/end', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    
-    console.log('⏹️ Ending session:', sessionId);
-    
-    const session = await Session.findOneAndUpdate(
-      { sessionId },
-      { 
-        status: 'ended',
-        endTime: new Date()
-      },
-      { new: true }
-    );
-    
-    const eventsCount = await Event.countDocuments({ sessionId });
-    
-    res.json({
-      success: true,
-      message: 'Session ended',
-      session: {
-        sessionId,
-        status: session.status,
-        totalEvents: eventsCount,
-        duration: session.endTime - session.startTime
-      }
-    });
-    
-  } catch (error) {
-    console.error('❌ Error ending session:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+router.post('/session/end', async (req, res) => {
+    try {
+        const { sessionId, endTime, duration, totalEvents } = req.body;
+
+        const session = await Session.findOneAndUpdate(
+            { sessionId },
+            {
+                $set: {
+                    status: 'completed',
+                    endTime: endTime || new Date(),
+                    duration: duration || 0,
+                    totalEvents: totalEvents || session?.totalEvents || 0
+                }
+            },
+            { new: true }
+        );
+
+        if (!session) {
+            return res.status(404).json({ success: false, error: 'Session not found' });
+        }
+
+        console.log('🏁 Session ended:', sessionId);
+        res.json({ success: true, session });
+
+    } catch (error) {
+        console.error('❌ Session end error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
-// Get session data
+// ========================================
+// EVENT ENDPOINTS
+// ========================================
+
+// Save batch of events
+router.post('/events/batch', async (req, res) => {
+    try {
+        const { sessionId, events } = req.body;
+
+        if (!events || events.length === 0) {
+            return res.json({ success: true, stored: 0 });
+        }
+
+        // Prepare events for bulk insert
+        const eventDocuments = events.map(e => ({
+            sessionId,
+            type: e.type || 'other',
+            data: e.data,
+            timestamp: e.timestamp || new Date(),
+            processed: false
+        }));
+
+        // Bulk insert
+        const inserted = await Event.insertMany(eventDocuments);
+
+        // Update session
+        await Session.findOneAndUpdate(
+            { sessionId },
+            {
+                $inc: { totalEvents: inserted.length },
+                $set: { updatedAt: new Date() }
+            }
+        );
+
+        console.log(`✅ Stored ${inserted.length} events for session ${sessionId}`);
+        res.status(201).json({ success: true, stored: inserted.length });
+
+    } catch (error) {
+        console.error('❌ Event batch error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Save single event
+router.post('/event', async (req, res) => {
+    try {
+        const { sessionId, type, data, timestamp } = req.body;
+
+        const event = new Event({
+            sessionId,
+            type: type || 'other',
+            data,
+            timestamp: timestamp || new Date(),
+            processed: false
+        });
+
+        await event.save();
+
+        // Update session
+        await Session.findOneAndUpdate(
+            { sessionId },
+            {
+                $inc: { totalEvents: 1 },
+                $set: { updatedAt: new Date() }
+            }
+        );
+
+        res.status(201).json({ success: true, eventId: event._id });
+
+    } catch (error) {
+        console.error('❌ Event save error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get events for session
+router.get('/events/:sessionId', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const events = await Event.find({ sessionId }).sort({ timestamp: 1 });
+
+        res.json({ success: true, events, count: events.length });
+
+    } catch (error) {
+        console.error('❌ Events retrieval error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get session details
 router.get('/session/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    
-    const session = await Session.findOne({ sessionId });
-    const events = await Event.find({ sessionId }).limit(100);
-    
-    res.json({
-      success: true,
-      session,
-      events,
-      eventCount: events.length
-    });
-    
-  } catch (error) {
-    console.error('❌ Error fetching session:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+    try {
+        const { sessionId } = req.params;
+        const session = await Session.findOne({ sessionId });
 
-// Get all sessions
-router.get('/sessions', async (req, res) => {
-  try {
-    const sessions = await Session.find().sort({ startTime: -1 }).limit(20);
-    
-    res.json({
-      success: true,
-      sessions,
-      count: sessions.length
-    });
-    
-  } catch (error) {
-    console.error('❌ Error fetching sessions:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+        if (!session) {
+            return res.status(404).json({ success: false, error: 'Session not found' });
+        }
 
-// Get statistics
-router.get('/stats', async (req, res) => {
-  try {
-    const totalSessions = await Session.countDocuments();
-    const activeSessions = await Session.countDocuments({ status: 'active' });
-    const totalEvents = await Event.countDocuments();
-    
-    res.json({
-      success: true,
-      stats: {
-        totalSessions,
-        activeSessions,
-        totalEvents
-      }
-    });
-    
-  } catch (error) {
-    console.error('❌ Error fetching stats:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+        res.json({ success: true, session });
+
+    } catch (error) {
+        console.error('❌ Session retrieval error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 module.exports = router;

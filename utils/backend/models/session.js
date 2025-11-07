@@ -1,4 +1,3 @@
-/* Session Model - Stores user monitoring sessions */
 const mongoose = require('mongoose');
 
 const sessionSchema = new mongoose.Schema({
@@ -10,12 +9,14 @@ const sessionSchema = new mongoose.Schema({
   },
   userId: {
     type: String,
-    index: true
+    index: true,
+    default: 'anonymous'
   },
   platform: {
     type: String,
     enum: ['GitHub', 'LeetCode', 'CodeSignal', 'HackerRank', 'Local IDE', 'Other'],
-    default: 'Other'
+    default: 'Other',
+    index: true
   },
   url: String,
   hostname: String,
@@ -28,12 +29,6 @@ const sessionSchema = new mongoose.Schema({
   },
   endTime: Date,
   duration: Number, // in seconds
-  
-  // Event tracking
-  events: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event'
-  }],
   
   // Analytics
   totalEvents: {
@@ -66,7 +61,10 @@ const sessionSchema = new mongoose.Schema({
     max: 100,
     default: 0
   },
-  isStuck: Boolean,
+  isStuck: {
+    type: Boolean,
+    default: false
+  },
   
   // Content
   selectedTexts: [String],
@@ -83,15 +81,23 @@ const sessionSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['active', 'paused', 'completed'],
-    default: 'active'
+    default: 'active',
+    index: true
+  },
+  
+  // Timestamps
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
 });
 
-// Create indexes for fast queries
+// Indexes for performance
 sessionSchema.index({ userId: 1, startTime: -1 });
 sessionSchema.index({ platform: 1, startTime: -1 });
-sessionSchema.index({ struggluScore: -1 });
+sessionSchema.index({ struggleScore: -1 });
+sessionSchema.index({ status: 1, startTime: -1 });
 
 module.exports = mongoose.model('Session', sessionSchema);
